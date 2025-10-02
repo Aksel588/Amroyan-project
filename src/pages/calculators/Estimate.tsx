@@ -16,7 +16,8 @@ const EstimateCalculatorPage = () => {
   return (
     <main className="pt-24 pb-12 bg-gradient-to-b from-black via-gray-900 to-black min-h-screen">
       <section className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <Card className="w-full max-w-2xl mx-auto bg-gradient-to-b from-gray-900 to-black border-gոլд-500/20">
+        <h1 className="sr-only">Նախագծերի հաշվիչ (Սմետա)</h1>
+        <Card className="w-full max-w-2xl mx-auto bg-gradient-to-b from-gray-900 to-black border-gold-500/20">
           <CardHeader>
             <CardTitle className="gradient-text">Նախագծերի հաշվիչ (Սմետա)</CardTitle>
             <CardDescription className="text-gray-400">Նախնական տարբերակ. նշեք՝ ինչ տողեր, միավորներ և հաշվարկների կանոններ պետք է ավելացնենք</CardDescription>

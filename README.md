@@ -693,10 +693,6 @@ For business-related inquiries about Amroyan Consulting services:
 
 ---
 
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 ## 🙏 Acknowledgments
 
 - **Laravel Community**: For the excellent PHP framework

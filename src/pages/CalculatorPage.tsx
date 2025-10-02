@@ -16,6 +16,7 @@ import ArmenianPayrollCalculator from '@/components/calculators/ArmenianPayrollC
 import ProfitTaxCalculator from '@/pages/calculators/ProfitTax';
 import BenefitCalculator from '@/pages/calculators/Benefit';
 import VATCalculator from '@/pages/calculators/VAT';
+import EstimateCalculator from '@/components/calculators/EstimateCalculator';
 
 const CalculatorPage = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -82,7 +83,7 @@ const CalculatorPage = () => {
       case 'comprehensive-salary':
         return <ComprehensiveSalaryCalculator />;
       case 'estimate':
-        return <ProjectCalculator />;
+        return <EstimateCalculator />;
       case 'turnover-tax':
         return <TurnoverTaxCalculator />;
       case 'armenian-tax':

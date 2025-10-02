@@ -53,6 +53,7 @@
 
 ### 🌟 Key Capabilities
 
+- **🚀 Database-Free Calculators**: All 9 financial calculators work completely offline without any backend dependencies
 - **Advanced Financial Calculators**: Armenian tax, payroll, project estimation, and turnover tax calculators
 - **Document Archive**: Comprehensive document management with categorization and access control
 - **Content Management**: Full-featured blog with SEO optimization and rich text editing
@@ -163,12 +164,23 @@ Frontend Components
 ## 🚀 Quick Start
 
 ### Prerequisites
-- **Node.js** (v18 or higher)
-- **PHP** (v8.0 or higher)
-- **Composer**
-- **npm**
+- **Node.js** (v18 or higher) - Required for calculators
+- **npm** - Required for calculators
+- **PHP** (v8.0 or higher) - Optional, only for admin features
+- **Composer** - Optional, only for admin features
 
-### 1. Backend Setup
+### 1. Frontend Setup (Calculators Work Standalone)
+```bash
+# From project root
+npm install
+
+# Start development server
+npm run dev
+```
+
+**✅ Calculators are now database-free and work immediately!**
+
+### 2. Backend Setup (Optional - for Admin Features)
 ```bash
 cd laravel-backend
 
@@ -188,16 +200,7 @@ php artisan storage:link
 php artisan serve
 ```
 
-### 2. Frontend Setup
-```bash
-# From project root
-npm install
-
-# Start development server
-npm run dev
-```
-
-### 3. Create Admin User
+### 3. Create Admin User (Optional)
 ```bash
 cd laravel-backend
 php artisan tinker
@@ -213,9 +216,10 @@ exit;
 ```
 
 ### 4. Access the Application
-- **Frontend**: http://localhost:8080
-- **Backend API**: http://127.0.0.1:8000/api/
-- **Admin Login**: admin@example.com / password
+- **Frontend**: http://localhost:8081 (or check terminal for actual port)
+- **Backend API**: http://127.0.0.1:8000/api/ (if backend is running)
+- **Admin Login**: admin@example.com / password (if backend is running)
+- **Calculators**: Work immediately without any backend setup!
 
 ## 📁 Project Structure
 
@@ -232,8 +236,10 @@ amroyan-cons-main-3/
 │   │   ├── pages/             # Route components
 │   │   ├── contexts/          # React contexts
 │   │   ├── integrations/      # API clients
+│   │   ├── data/              # Static data configuration
+│   │   │   └── calculators.ts # Calculator definitions (database-free)
 │   │   └── lib/               # Utilities
-├── 🖥️ Backend (laravel-backend/)
+├── 🖥️ Backend (laravel-backend/) - Optional
 │   ├── app/Http/Controllers/Api/ # API controllers
 │   ├── app/Models/               # Database models
 │   ├── database/migrations/      # Database schema
@@ -273,10 +279,12 @@ POST   /api/documents/{id}/toggle-publish  # Toggle status
 
 ### Calculator Endpoints
 ```http
-GET    /api/calculators         # Get calculators
-POST   /api/calculators         # Create calculator (auth)
-PUT    /api/calculators/{id}    # Update calculator (auth)
-DELETE /api/calculators/{id}    # Delete calculator (auth)
+# Note: Calculators now work with static data - no database required
+# These endpoints are available for admin management only
+GET    /api/calculators         # Get calculators (admin only)
+POST   /api/calculators         # Create calculator (admin only)
+PUT    /api/calculators/{id}    # Update calculator (admin only)
+DELETE /api/calculators/{id}    # Delete calculator (admin only)
 ```
 
 ### Settings Endpoints
@@ -344,11 +352,53 @@ headers: {
 
 ## 🧮 Calculator System
 
-The platform features a comprehensive suite of financial calculators designed specifically for Armenian business needs:
+The platform features a comprehensive suite of **database-free** financial calculators designed specifically for Armenian business needs. All calculators work completely offline without requiring any backend database connection.
 
 ### 📊 Available Calculators
 
-#### 1. **Armenian Tax Calculator** 
+#### 1. **Աշխատավարձի հաշվիչ (Salary Calculator)** 
+- **Purpose**: Basic salary calculations with tax deductions
+- **Features**: 
+  - Gross to net salary conversion
+  - Income tax calculations
+  - Social security contributions
+  - Armenian tax rates
+- **Use Case**: Monthly salary calculations
+- **URL**: `/calculators/salary`
+
+#### 2. **Ամբողջական աշխատավարձի հաշվիչ (Comprehensive Salary Calculator)**
+- **Purpose**: Advanced salary calculations with multiple positions
+- **Features**:
+  - Up to 6 salary positions (hourly, daily, monthly)
+  - Tax calculations (income tax, pension contributions)
+  - Profit margin calculations
+  - VAT inclusion (20%)
+  - Detailed cost breakdown
+- **Use Case**: Project bidding and cost estimation
+- **URL**: `/calculators/comprehensive-salary`
+
+#### 3. **Նախագծային հաշվիչ (Project Calculator)**
+- **Purpose**: Project cost estimation with salary calculations
+- **Features**:
+  - Multiple position types (hourly, daily, monthly)
+  - Tax calculations (income tax, pension contributions)
+  - Profit margin calculations
+  - VAT inclusion (20%)
+  - Detailed cost breakdown
+- **Use Case**: Project bidding and cost estimation
+- **URL**: `/calculators/estimate`
+
+#### 4. **Շրջանառության հարկի հաշվիչ (Turnover Tax Calculator)**
+- **Purpose**: Quarterly turnover tax calculations
+- **Features**:
+  - Multiple business activity types
+  - Fixed and calculated tax rates
+  - Minimum tax calculations
+  - Cost deduction handling
+- **Use Case**: Quarterly tax compliance
+- **URL**: `/calculators/turnover-tax`
+
+#### 5. **Հայաստանի հարկային հաշվիչ (Armenian Tax Calculator)**
 - **Purpose**: Complete Armenian tax calculation with 79 calculation rows
 - **Features**: 
   - Income calculations (domestic & foreign)
@@ -357,18 +407,9 @@ The platform features a comprehensive suite of financial calculators designed sp
   - Tax reductions and exemptions
   - Final profit tax calculation (18%)
 - **Use Case**: Annual tax planning and compliance
+- **URL**: `/calculators/armenian-tax`
 
-#### 2. **Project Calculator**
-- **Purpose**: Project cost estimation with salary calculations
-- **Features**:
-  - Up to 6 salary positions (hourly, daily, monthly)
-  - Tax calculations (income tax, pension contributions)
-  - Profit margin calculations
-  - VAT inclusion (20%)
-  - Detailed cost breakdown
-- **Use Case**: Project bidding and cost estimation
-
-#### 3. **Armenian Payroll Calculator**
+#### 6. **Հայաստանի աշխատավարձի հաշվիչ (Armenian Payroll Calculator)**
 - **Purpose**: Comprehensive salary and payroll calculations
 - **Features**:
   - Multiple salary types
@@ -376,34 +417,76 @@ The platform features a comprehensive suite of financial calculators designed sp
   - Social security contributions
   - Net/gross salary calculations
 - **Use Case**: Monthly payroll processing
+- **URL**: `/calculators/armenian-payroll`
 
-#### 4. **Turnover Tax Calculator**
-- **Purpose**: Quarterly turnover tax calculations
+#### 7. **Շահութահարկի հաշվիչ (Profit Tax Calculator)**
+- **Purpose**: Profit tax calculations
 - **Features**:
-  - Multiple business activity types
-  - Fixed and calculated tax rates
-  - Minimum tax calculations
-  - Cost deduction handling
-- **Use Case**: Quarterly tax compliance
+  - Profit calculations
+  - Tax rate applications
+  - Deduction handling
+- **Use Case**: Business profit tax planning
+- **URL**: `/calculators/profit-tax`
 
-#### 5. **Comprehensive Salary Calculator**
-- **Purpose**: Advanced salary calculations with benefits
+#### 8. **Նպաստի հաշվիչ (Benefit Calculator)**
+- **Purpose**: Various benefit calculations
 - **Features**:
-  - Multiple benefit types
-  - Tax optimization
-  - Detailed reporting
-- **Use Case**: HR planning and compensation analysis
+  - Child care benefits
+  - Sick leave calculations
+  - Maternity benefits
+  - Unemployment benefits
+  - Disability benefits
+- **Use Case**: Employee benefit calculations
+- **URL**: `/calculators/benefit`
+
+#### 9. **Շրջհարկի (ԱԱՀ) հաշվիչ (VAT Calculator)**
+- **Purpose**: VAT calculations
+- **Features**:
+  - VAT amount calculations
+  - Net to gross conversions
+  - Gross to net conversions
+  - Armenian VAT rates (20%)
+- **Use Case**: Business VAT calculations
+- **URL**: `/calculators/vat`
 
 ### 🔧 Calculator Features
 
-- **Real-time Calculations**: Instant updates as users input data
-- **Armenian Currency Formatting**: Proper AMD formatting throughout
-- **Mobile Responsive**: Optimized for all device sizes
-- **Save & Export**: Ability to save calculations and export results
-- **Admin Configuration**: Dynamic rate management through admin panel
-- **SEO Optimized**: Each calculator has dedicated SEO-friendly URLs
+- **🚀 Database-Free**: All calculators work completely offline without database dependencies
+- **⚡ Instant Loading**: No API calls or network delays - calculations happen instantly
+- **📱 Mobile Responsive**: Optimized for all device sizes
+- **💰 Armenian Currency Formatting**: Proper AMD formatting throughout
+- **🔍 Real-time Calculations**: Instant updates as users input data
+- **🌐 SEO Optimized**: Each calculator has dedicated SEO-friendly URLs
+- **📊 Export Ready**: Results can be copied and exported
+- **🔄 Offline Capable**: Works without internet connection
+- **🎯 Armenian-Focused**: Designed specifically for Armenian business needs
 
-- **SEO Optimized**: Each calculator has dedicated SEO-friendly URLs
+### 🗂️ Static Data Configuration
+
+The calculator system uses a static configuration file (`src/data/calculators.ts`) that contains all calculator definitions:
+
+```typescript
+// Example calculator definition
+{
+  id: 1,
+  title: 'Աշխատավարձի հաշվիչ',
+  slug: 'salary',
+  description: 'Հաշվեք ձեր աշխատավարձը՝ հարկերով և նպաստներով',
+  icon_name: 'Calculator',
+  visible: true,
+  category: 'salary',
+  tags: ['աշխատավարձ', 'հարկեր', 'նպաստներ'],
+  sort_order: 1
+}
+```
+
+**Benefits of Static Configuration:**
+- ✅ **No Database Required**: Calculators work without any backend
+- ✅ **Instant Loading**: No API calls or network delays
+- ✅ **Offline Capable**: Works without internet connection
+- ✅ **Easy Maintenance**: Simple TypeScript file to update
+- ✅ **Version Control**: All calculator definitions in source code
+- ✅ **Portable**: Can run on any computer without setup
 
 ## 📄 Document Management
 
@@ -618,6 +701,15 @@ npm run lint               # Run linter
 
 ## 🎯 Getting Started Checklist
 
+### For Calculators Only (Database-Free)
+- [ ] Install Node.js (v18+)
+- [ ] Clone repository
+- [ ] Run `npm install`
+- [ ] Run `npm run dev`
+- [ ] Open http://localhost:8081
+- [ ] **✅ Calculators work immediately!**
+
+### For Full Platform (Including Admin Features)
 - [ ] Install Node.js and PHP
 - [ ] Clone repository
 - [ ] Setup backend (composer, .env, migrate)

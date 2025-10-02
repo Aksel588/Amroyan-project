@@ -1,85 +1,61 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { laravelApi } from '@/integrations/laravel/client';
+import { getCalculatorBySlug } from '@/data/calculators';
 import LoadingPage from '@/components/LoadingPage';
 import NotFound from '@/pages/NotFound';
-import { toast } from '@/hooks/use-toast';
 import DynamicIcon from '@/components/ui/DynamicIcon';
 
 // Import specific calculator components
 import SalaryCalculator from '@/components/calculators/SalaryCalculator';
-
-interface Calculator {
-  id: string;
-  title: string;
-  slug: string;
-  description: string;
-  icon_name: string;
-  visible: boolean;
-}
+import ComprehensiveSalaryCalculator from '@/components/calculators/ComprehensiveSalaryCalculator';
+import ProjectCalculator from '@/components/calculators/ProjectCalculator';
+import TurnoverTaxCalculator from '@/components/calculators/TurnoverTaxCalculator';
+import ArmenianTaxCalculator from '@/components/calculators/ArmenianTaxCalculator';
+import ArmenianPayrollCalculator from '@/components/calculators/ArmenianPayrollCalculator';
+import ProfitTaxCalculator from '@/pages/calculators/ProfitTax';
+import BenefitCalculator from '@/pages/calculators/Benefit';
+import VATCalculator from '@/pages/calculators/VAT';
 
 const CalculatorPage = () => {
   const { slug } = useParams<{ slug: string }>();
-  const [calculator, setCalculator] = useState<Calculator | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
-    const fetchCalculator = async () => {
-      if (!slug) {
-        setNotFound(true);
-        setLoading(false);
-        return;
-      }
+    if (!slug) {
+      setNotFound(true);
+      setLoading(false);
+      return;
+    }
 
-      try {
-        // Get all calculators and find the one with matching slug
-        const response = await laravelApi.getCalculators();
-        const calculators = response.data || [];
-        const foundCalculator = calculators.find((calc: Calculator) => calc.slug === slug && calc.visible);
-        
-        if (foundCalculator) {
-          setCalculator(foundCalculator);
-          
-          // Set page title and meta description
-          document.title = `${foundCalculator.title} — Հաշվիչ | Amroyan Consulting`;
-          let meta = document.querySelector('meta[name="description"]');
-          if (!meta) {
-            meta = document.createElement('meta');
-            meta.setAttribute('name', 'description');
-            document.head.appendChild(meta);
-          }
-          meta.setAttribute('content', foundCalculator.description || `${foundCalculator.title} հաշվիչ`);
-          
-          // Set canonical URL
-          let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
-          if (!canonical) {
-            canonical = document.createElement('link');
-            canonical.setAttribute('rel', 'canonical');
-            document.head.appendChild(canonical);
-          }
-          canonical.setAttribute('href', `${window.location.origin}/calculators/${slug}`);
-        } else {
-          setNotFound(true);
-        }
-      } catch (error) {
-        console.error('Error fetching calculator:', error);
-        // Don't show toast for 404 errors, just set not found
-        if (error.response?.status !== 404) {
-          toast({
-            title: "Սխալ",
-            description: "Չհաջողվեց բեռնել հաշվիչը",
-            variant: "destructive"
-          });
-        }
-        setNotFound(true);
-      } finally {
-        setLoading(false);
+    // Get calculator from static data
+    const calculator = getCalculatorBySlug(slug);
+    
+    if (calculator) {
+      // Set page title and meta description
+      document.title = `${calculator.title} — Հաշվիչ | Amroyan Consulting`;
+      let meta = document.querySelector('meta[name="description"]');
+      if (!meta) {
+        meta = document.createElement('meta');
+        meta.setAttribute('name', 'description');
+        document.head.appendChild(meta);
       }
-    };
-
-    fetchCalculator();
+      meta.setAttribute('content', calculator.description || `${calculator.title} հաշվիչ`);
+      
+      // Set canonical URL
+      let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+      if (!canonical) {
+        canonical = document.createElement('link');
+        canonical.setAttribute('rel', 'canonical');
+        document.head.appendChild(canonical);
+      }
+      canonical.setAttribute('href', `${window.location.origin}/calculators/${slug}`);
+    } else {
+      setNotFound(true);
+    }
+    
+    setLoading(false);
   }, [slug]);
 
   // Show loading while fetching
@@ -88,7 +64,13 @@ const CalculatorPage = () => {
   }
 
   // Show 404 if calculator not found
-  if (notFound || !calculator) {
+  if (notFound) {
+    return <NotFound />;
+  }
+
+  // Get calculator from static data
+  const calculator = getCalculatorBySlug(slug!);
+  if (!calculator) {
     return <NotFound />;
   }
 
@@ -97,15 +79,22 @@ const CalculatorPage = () => {
     switch (slug) {
       case 'salary':
         return <SalaryCalculator />;
-      case 'vat':
-        // You can add other calculator components here as they're implemented
-        return <div className="text-center text-gray-400 py-8">VAT հաշվիչը շուտով կլինի հասանելի</div>;
-      case 'profit-tax':
-        return <div className="text-center text-gray-400 py-8">Շահութահարկի հաշվիչը շուտով կլինի հասանելի</div>;
-      case 'benefit':
-        return <div className="text-center text-gray-400 py-8">Նպաստի հաշվիչը շուտով կլինի հասանելի</div>;
+      case 'comprehensive-salary':
+        return <ComprehensiveSalaryCalculator />;
       case 'estimate':
-        return <div className="text-center text-gray-400 py-8">Նախագծային հաշվիչը շուտով կլինի հասանելի</div>;
+        return <ProjectCalculator />;
+      case 'turnover-tax':
+        return <TurnoverTaxCalculator />;
+      case 'armenian-tax':
+        return <ArmenianTaxCalculator />;
+      case 'armenian-payroll':
+        return <ArmenianPayrollCalculator />;
+      case 'profit-tax':
+        return <ProfitTaxCalculator />;
+      case 'benefit':
+        return <BenefitCalculator />;
+      case 'vat':
+        return <VATCalculator />;
       default:
         return (
           <Card className="bg-gray-900/50 border-gold-500/20">

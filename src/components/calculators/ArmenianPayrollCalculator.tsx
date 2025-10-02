@@ -173,7 +173,7 @@ const ArmenianPayrollCalculator = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 py-8">
       <div className="container mx-auto px-4">
-        <Card className="bg-gradient-to-br from-gray-900 to-black border-gold-500/20 shadow-2xl">
+        <Card className="bg-gradient-to-b from-gray-900 to-black border-gold-500/20 shadow-2xl">
           <CardHeader className="text-center pb-8">
             <div className="flex items-center justify-center gap-3 mb-4">
               <div className="p-3 bg-gold-500/20 rounded-full">
@@ -215,7 +215,7 @@ const ArmenianPayrollCalculator = () => {
             </div>
 
             {/* Input Section */}
-            <Card className="bg-gradient-to-br from-gray-900 to-black border-gold-500/20">
+            <Card className="bg-gradient-to-b from-gray-900 to-black border-gold-500/20">
               <CardContent className="p-8">
                 <div className="space-y-8">
                   {/* Calculation Type */}
@@ -335,7 +335,7 @@ const ArmenianPayrollCalculator = () => {
                 </Card>
 
                 {/* Breakdown */}
-                <Card className="bg-gradient-to-br from-gray-900 to-black border-gold-500/20">
+                <Card className="bg-gradient-to-b from-gray-900 to-black border-gold-500/20">
                   <CardHeader>
                     <CardTitle className="text-xl text-gold-400 flex items-center gap-2">
                       <Receipt className="w-6 h-6" />

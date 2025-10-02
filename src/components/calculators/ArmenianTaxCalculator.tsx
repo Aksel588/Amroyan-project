@@ -353,7 +353,7 @@ const ArmenianTaxCalculator = () => {
           </div>
 
           {/* Search and Filter Section */}
-          <Card className="bg-gradient-to-br from-gray-900 to-black border-gold-500/20">
+          <Card className="bg-gradient-to-b from-gray-900 to-black border-gold-500/20">
             <CardContent className="p-6">
               {/* Search Bar */}
               <div className="relative mb-6">

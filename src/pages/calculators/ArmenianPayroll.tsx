@@ -4,7 +4,7 @@ import ArmenianPayrollCalculator from '@/components/calculators/ArmenianPayrollC
 const ArmenianPayrollPage = () => {
   useEffect(() => {
     document.title = 'Հայաստանի աշխատավարձի հաշվիչ | Amroyan Consulting';
-    const desc = 'Հաշվեք կեղտոտ/մաքուր աշխատավարձը՝ եկամտահարկ, սոցիալական վճարներ և դրոշմանիշային վճար: Armenian payroll calculator with complex tax calculations.';
+    const desc = 'Հաշվեք կեղտոտ/մաքուր աշխատավարձը՝ եկամտահարկ, սոցիալական վճարներ և դրոշմանիշային վճար';
     let meta = document.querySelector('meta[name="description"]');
     if (!meta) { 
       meta = document.createElement('meta'); 
@@ -13,18 +13,23 @@ const ArmenianPayrollPage = () => {
     }
     meta.setAttribute('content', desc);
     
-    // Set keywords
-    const keywords = 'հայաստան, աշխատավարձ, հաշվիչ, եկամտահարկ, սոցիալական վճար, դրոշմանիշային վճար, payroll, tax calculator, Armenia';
-    let keywordsMeta = document.querySelector('meta[name="keywords"]');
-    if (!keywordsMeta) { 
-      keywordsMeta = document.createElement('meta'); 
-      keywordsMeta.setAttribute('name', 'keywords'); 
-      document.head.appendChild(keywordsMeta); 
+    let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+    if (!canonical) { 
+      canonical = document.createElement('link'); 
+      canonical.setAttribute('rel', 'canonical'); 
+      document.head.appendChild(canonical); 
     }
-    keywordsMeta.setAttribute('content', keywords);
+    canonical.setAttribute('href', window.location.origin + '/calculators/armenian-payroll');
   }, []);
 
-  return <ArmenianPayrollCalculator />;
+  return (
+    <main className="pt-24 pb-12 bg-gradient-to-b from-black via-gray-900 to-black min-h-screen">
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 className="sr-only">Հայաստանի աշխատավարձի հաշվիչ</h1>
+        <ArmenianPayrollCalculator />
+      </section>
+    </main>
+  );
 };
 
 export default ArmenianPayrollPage;

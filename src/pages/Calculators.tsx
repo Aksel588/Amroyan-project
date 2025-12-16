@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
 import { useEffect, useState, useMemo } from 'react';
-import { getVisibleCalculators } from '@/data/calculators';
+import { laravelApi } from '@/integrations/laravel/client';
 import DynamicIcon from '@/components/ui/DynamicIcon';
 import NetworkAnimation from '@/components/NetworkAnimation';
 
@@ -30,22 +30,98 @@ const Calculators = () => {
     canonical.setAttribute('href', window.location.origin + '/calculators');
   }, []);
 
+  const [items, setItems] = useState<Array<{ title: string; to: string; icon_name: string; desc: string; category?: string; tags?: string[] }>>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [sortBy, setSortBy] = useState('title');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [showFilters, setShowFilters] = useState(false);
 
-  // Get calculators from static data
-  const calculators = getVisibleCalculators();
-  const items = calculators.map(calc => ({
-    title: calc.title,
-    to: `/calculators/${calc.slug}`,
-    icon_name: calc.icon_name,
-    desc: calc.description,
-    category: calc.category,
-    tags: calc.tags
-  }));
+  useEffect(() => {
+    // Fetch visible calculators from Laravel API
+    const fetchCalculators = async () => {
+      try {
+        const response = await laravelApi.getCalculators();
+        const data = response.data || [];
+        console.log('API Response:', response);
+        console.log('Calculators data:', data);
+        
+        const apiItems = data.map((d: any) => ({
+          title: d.title,
+          to: `/calculators/${d.slug}`,
+          icon_name: d.icon_name || 'Calculator',
+          desc: d.description || '',
+          category: d.category || 'general',
+          tags: d.tags || []
+        }));
+        
+        console.log('Processed items:', apiItems);
+        setItems(apiItems);
+      } catch (error) {
+        console.error('Error fetching calculators:', error);
+        // Fallback to default calculators if API fails
+        setItems([
+          {
+            title: 'Աշխատավարձի հաշվիչ',
+            to: '/calculators/salary',
+            icon_name: 'Calculator',
+            desc: 'Հաշվեք գրանցված ↔ մաքուր աշխատավարձը՝ հաշվի առնելով եկամտային հարկը, կուտակային վճարներն ու դրոշմանիշային վճարը',
+            category: 'salary',
+            tags: ['աշխատավարձ', 'հարկ', 'կուտակային', 'դրոշմանիշ']
+          },
+          {
+            title: 'Աշխատավարձի հաշվիչ (լրիվ)',
+            to: '/calculators/comprehensive-salary',
+            icon_name: 'Calculator',
+            desc: 'Հաշվեք աշխատավարձի ֆոնդը, հարկերը, ծախսերը և վերջնական գինը՝ ժամավճարային, օրավճարային և ամսավճարային դրույքներով',
+            category: 'salary',
+            tags: ['աշխատավարձ', 'ֆոնդ', 'հարկ', 'ծախս', 'շահույթ']
+          },
+          {
+            title: 'Նախագծային հաշվիչ',
+            to: '/calculators/estimate',
+            icon_name: 'Calculator',
+            desc: 'Հաշվեք նախագծերի արժեքը և գնահատումները',
+            category: 'project',
+            tags: ['նախագիծ', 'արժեք', 'գնահատում', 'սմետա']
+          },
+          {
+            title: 'Շրջանառության հարկի հաշվիչ',
+            to: '/calculators/turnover-tax',
+            icon_name: 'Calculator',
+            desc: 'Հաշվեք եռամսյակային շրջանառության հարկը՝ տարբեր գործունեության տեսակների համար՝ հանելով ծախսերը և ստուգելով նվազագույն հարկը',
+            category: 'tax',
+            tags: ['շրջանառություն', 'հարկ', 'եռամսյակ', 'գործունեություն']
+          },
+          {
+            title: 'Շահութահարկի հաշվիչ',
+            to: '/calculators/armenian-tax',
+            icon_name: 'Calculator',
+            desc: 'Հաշվեք շահութահարկը՝ եկամուտներ, ծախսեր, կորուստներ, նվազեցումներ և հարկվող շահույթ՝ 79 տողի ամբողջական հարկային աղյուսակով',
+            category: 'tax',
+            tags: ['շահութահարկ', 'հարկային', 'եկամուտ', 'ծախս', 'կորուստ']
+          },
+          {
+            title: 'Հայաստանի աշխատավարձի հաշվիչ',
+            to: '/calculators/armenian-payroll',
+            icon_name: 'Calculator',
+            desc: 'Հաշվեք կեղտոտ/մաքուր աշխատավարձը՝ եկամտահարկ, սոցիալական վճարներ և դրոշմանիշային վճար',
+            category: 'salary',
+            tags: ['աշխատավարձ', 'կեղտոտ', 'մաքուր', 'հարկ', 'սոցիալական']
+          },
+          {
+            title: 'Նպաստի հաշվիչ',
+            to: '/calculators/benefit',
+            icon_name: 'Calculator',
+            desc: 'Հաշվեք տարբեր տեսակի նպաստները՝ երեխայի խնամք, հիվանդություն, ծննդաբերություն և այլն',
+            category: 'benefits',
+            tags: ['նպաստ', 'երեխա', 'հիվանդություն', 'ծննդաբերություն']
+          }
+        ]);
+      }
+    };
+    fetchCalculators();
+  }, []);
 
   const features = [
     {

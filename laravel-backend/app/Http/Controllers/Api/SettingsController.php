@@ -4,42 +4,50 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class SettingsController extends Controller
 {
     /**
-     * Get all settings
+     * Default settings used when none exist or when the settings table is missing (e.g. migration not run).
+     */
+    private function defaultSettings(): array
+    {
+        return [
+            'maintenanceMode' => false,
+            'allowRegistration' => true,
+            'emailNotifications' => true,
+            'autoBackup' => true,
+            'siteName' => 'Փաստաթղթային Համակարգ',
+            'adminEmail' => 'admin@example.com',
+            'welcomeMessage' => 'Բարի գալուստ մեր կայք'
+        ];
+    }
+
+    /**
+     * Get all settings. Returns defaults with 200 if the settings table is missing so the admin page still loads.
      */
     public function index()
     {
+        $defaultSettings = $this->defaultSettings();
+
         try {
             $settings = Setting::getAll();
-            
-            // Provide default values if no settings exist
-            $defaultSettings = [
-                'maintenanceMode' => false,
-                'allowRegistration' => true,
-                'emailNotifications' => true,
-                'autoBackup' => true,
-                'siteName' => 'Փաստաթղթային Համակարգ',
-                'adminEmail' => 'admin@example.com',
-                'welcomeMessage' => 'Բարի գալուստ մեր կայք'
-            ];
-
-            // Merge with defaults
             $settings = array_merge($defaultSettings, $settings);
 
             return response()->json([
                 'success' => true,
                 'data' => $settings
             ]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            // Table missing or DB error: return defaults so admin UI loads; run migrations on server to persist settings
             return response()->json([
-                'success' => false,
-                'message' => 'Failed to retrieve settings',
-                'error' => $e->getMessage()
-            ], 500);
+                'success' => true,
+                'data' => $defaultSettings,
+                '_fallback' => true,
+                '_message' => 'Using default settings. Run: php artisan migrate'
+            ]);
         }
     }
 
@@ -176,6 +184,45 @@ class SettingsController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to initialize default settings',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Set the main admin by user id. The user must have role=admin. Updates adminEmail setting to that user's email.
+     */
+    public function setMainAdmin(Request $request)
+    {
+        $request->validate([
+            'user_id' => 'required_without:email|integer|exists:users,id',
+            'email' => 'required_without:user_id|email|exists:users,email',
+        ]);
+
+        if ($request->has('user_id')) {
+            $user = User::findOrFail($request->user_id);
+        } else {
+            $user = User::where('email', $request->email)->firstOrFail();
+        }
+
+        if ($user->role !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'User must have admin role to be set as main admin'
+            ], 422);
+        }
+
+        try {
+            Setting::set('adminEmail', $user->email, 'string', 'Primary administrator email address');
+            return response()->json([
+                'success' => true,
+                'message' => 'Main admin updated successfully',
+                'data' => ['adminEmail' => $user->email]
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to set main admin',
                 'error' => $e->getMessage()
             ], 500);
         }

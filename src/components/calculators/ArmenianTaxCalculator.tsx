@@ -46,54 +46,69 @@ const ArmenianTaxCalculator = () => {
   const [showCalculatedRows, setShowCalculatedRows] = useState(true);
 
   const [rows, setRows] = useState<TaxRow[]>([
-    // Incomes (Rows 1-23)
-    { id: '1', number: 1, name: 'Վաճառքից եկամուտ', value: 0, section: 'incomes', category: 'domestic' },
-    { id: '2', number: 2, name: 'Այլ եկամուտներ', value: 0, section: 'incomes', category: 'domestic' },
-    { id: '3', number: 3, name: 'Ֆինանսական եկամուտներ', value: 0, section: 'incomes', category: 'financial' },
-    { id: '4', number: 4, name: 'Արտասահմանյան գործունեությունից եկամուտ', value: 0, section: 'incomes', category: 'foreign' },
-    { id: '5', number: 5, name: 'Արտասահմանյան ներդրումներից եկամուտ', value: 0, section: 'incomes', category: 'foreign' },
-    { id: '6', number: 6, name: 'Արտասահմանյան ակտիվների վաճառքից եկամուտ', value: 0, section: 'incomes', category: 'foreign' },
-    { id: '7', number: 7, name: 'Արտասահմանյան ակտիվների վարձակալությունից եկամուտ', value: 0, section: 'incomes', category: 'foreign' },
-    { id: '8', number: 8, name: 'Արտասահմանյան ակտիվների այլ օգտագործումից եկամուտ', value: 0, section: 'incomes', category: 'foreign' },
-    { id: '9', number: 9, name: 'Արտասահմանյան ակտիվների վաճառքից կորուստ', value: 0, section: 'incomes', category: 'foreign_loss' },
-    { id: '10', number: 10, name: 'Արտասահմանյան ակտիվների վարձակալությունից կորուստ', value: 0, section: 'incomes', category: 'foreign_loss' },
-    { id: '11', number: 11, name: 'Արտասահմանյան ակտիվների այլ օգտագործումից կորուստ', value: 0, section: 'incomes', category: 'foreign_loss' },
-    { id: '12', number: 12, name: 'Արտասահմանյան ներդրումներից կորուստ', value: 0, section: 'incomes', category: 'foreign_loss' },
-    { id: '13', number: 13, name: 'Արտասահմանյան գործունեությունից կորուստ', value: 0, section: 'incomes', category: 'foreign_loss' },
-    { id: '14', number: 14, name: 'Արտասահմանյան ակտիվների վաճառքից եկամուտ (հարկային)', value: 0, section: 'incomes', category: 'foreign_taxable' },
-    { id: '15', number: 15, name: 'Արտասահմանյան ակտիվների վարձակալությունից եկամուտ (հարկային)', value: 0, section: 'incomes', category: 'foreign_taxable' },
-    { id: '16', number: 16, name: 'Արտասահմանյան ակտիվների այլ օգտագործումից եկամուտ (հարկային)', value: 0, section: 'incomes', category: 'foreign_taxable' },
-    { id: '17', number: 17, name: 'Արտասահմանյան ներդրումներից եկամուտ (հարկային)', value: 0, section: 'incomes', category: 'foreign_taxable' },
-    { id: '18', number: 18, name: 'Արտասահմանյան գործունեությունից եկամուտ (հարկային)', value: 0, section: 'incomes', category: 'foreign_taxable' },
-    { id: '19', number: 19, name: 'Արտասահմանյան ակտիվների վաճառքից կորուստ (հարկային)', value: 0, section: 'incomes', category: 'foreign_taxable_loss' },
-    { id: '20', number: 20, name: 'Արտասահմանյան ակտիվների վարձակալությունից կորուստ (հարկային)', value: 0, section: 'incomes', category: 'foreign_taxable_loss' },
-    { id: '21', number: 21, name: 'Արտասահմանյան ակտիվների այլ օգտագործումից կորուստ (հարկային)', value: 0, section: 'incomes', category: 'foreign_taxable_loss' },
-    { id: '22', number: 22, name: 'Արտասահմանյան ներդրումներից կորուստ (հարկային)', value: 0, section: 'incomes', category: 'foreign_taxable_loss' },
-    { id: '23', number: 23, name: 'Արտասահմանյան գործունեությունից կորուստ (հարկային)', value: 0, section: 'incomes', category: 'foreign_taxable_loss' },
-    { id: '24', number: 24, name: 'Ընդամենը եկամուտներ', value: 0, isCalculated: true, formula: 'SUM(1-23)', section: 'incomes', category: 'total' },
+    // Incomes (Rows 1-24) — Source: cal.xlsx (sheet: շահութահարկ)
+    { id: '1', number: 1, name: 'Ապրանքների մատակարարումից եկամուտը', value: 0, section: 'incomes', category: 'incomes' },
+    { id: '2', number: 2, name: 'Արտադրանքի մատակարարումից եկամուտը', value: 0, section: 'incomes', category: 'incomes' },
+    { id: '3', number: 3, name: 'Աշխատանքների կատարումից եկամուտը', value: 0, section: 'incomes', category: 'incomes' },
+    { id: '4', number: 4, name: 'Ծառայությունների մատուցումից եկամուտը, այդ թվում', value: 0, section: 'incomes', category: 'incomes' },
+    { id: '5', number: 5, name: 'Հիմնական միջոցների օտարումից եկամուտը', value: 0, section: 'incomes', category: 'incomes' },
+    { id: '6', number: 6, name: 'Այլ ակտիվների օտարումից եկամուտը', value: 0, section: 'incomes', category: 'incomes' },
+    { id: '7', number: 7, name: 'Շահաբաժիններից եկամուտը', value: 0, section: 'incomes', category: 'incomes' },
+    { id: '8', number: 8, name: 'Վարկերի տրամադրումից տոկոսային եկամուտը', value: 0, section: 'incomes', category: 'incomes' },
+    { id: '9', number: 9, name: 'Փոխառությունների տրամադրումից տոկոսային եկամուտը', value: 0, section: 'incomes', category: 'incomes' },
+    { id: '10', number: 10, name: 'վարձակալությունից վարձակալական վճարից և (կամ) սերվիտուտի վճարից եկամուտը', value: 0, section: 'incomes', category: 'incomes' },
+    { id: '11', number: 11, name: 'Ռոյալթիներից եկամուտը', value: 0, section: 'incomes', category: 'incomes' },
+    { id: '12', number: 12, name: 'Անհատույց ստացված դրամական միջոցներից եկամուտը', value: 0, section: 'incomes', category: 'incomes' },
+    { id: '13', number: 13, name: 'Անհատույց ստացված հողամասերից եկամուտը', value: 0, section: 'incomes', category: 'incomes' },
+    { id: '14', number: 14, name: 'Անհատույց ստացված  այլ եկամուտը', value: 0, section: 'incomes', category: 'incomes' },
+    { id: '15', number: 15, name: 'Գույքագրման ժամանակ հայտնաբերված գույքի ավելցուկից եկամուտը', value: 0, section: 'incomes', category: 'incomes' },
+    { id: '16', number: 16, name: 'Փաստացի առաջացած (առկա) պարտավորությունների՝ ամբողջությամբ կամ մասնակի զեղչումից կամ ներումից ստացվող եկամուտը', value: 0, section: 'incomes', category: 'incomes' },
+    { id: '17', number: 17, name: 'Ապահովագրական հատուցումից եկամուտը', value: 0, section: 'incomes', category: 'incomes' },
+    { id: '18', number: 18, name: 'Պատճառված վնասի (կրած կորստի) հատուցումից եկամուտը', value: 0, section: 'incomes', category: 'incomes' },
+    { id: '19', number: 19, name: 'Տույժերի, տուգանքների և գույքային այլ պատժամիջոցների տեսքով եկամուտը', value: 0, section: 'incomes', category: 'incomes' },
+    { id: '20', number: 20, name: 'Հարկման նպատակով դուրս գրման ենթակա կրեդիտորական պարտքերից եկամուտը', value: 0, section: 'incomes', category: 'incomes' },
+    { id: '21', number: 21, name: 'Նախկինում դուրս գրված անհուսալի դեբիտորական պարտքերի մարումից եկամուտը', value: 0, section: 'incomes', category: 'incomes' },
+    { id: '22', number: 22, name: 'Հաշվանցման (պակասեցման) ենթակա ԱԱՀ-ի գումարներին ավելացվող գումարներից եկամուտը', value: 0, section: 'incomes', category: 'incomes' },
+    { id: '23', number: 23, name: 'Այլ եկամուտները', value: 0, section: 'incomes', category: 'incomes' },
+    { id: '24', number: 24, name: 'Ընդամենը, եկամուտներ', value: 0, isCalculated: true, formula: 'SUM(1-23)', section: 'incomes', category: 'total' },
     
-    // Expenses (Rows 25-44)
-    { id: '25', number: 25, name: 'Վաճառված ապրանքների ինքնարժեք', value: 0, section: 'expenses', category: 'cost_of_goods' },
-    { id: '26', number: 26, name: 'Վաճառված ապրանքների վարձակալություն', value: 0, section: 'expenses', category: 'cost_of_goods' },
-    { id: '27', number: 27, name: 'Վաճառված ապրանքների այլ ծախսեր', value: 0, section: 'expenses', category: 'cost_of_goods' },
-    { id: '28', number: 28, name: 'Վաճառված ապրանքների ընդհանուր ծախսեր', value: 0, isSubtotal: true, parentRows: [25, 26, 27], section: 'expenses', category: 'cost_of_goods_total' },
-    { id: '29', number: 29, name: 'Վաճառված ծառայությունների ինքնարժեք', value: 0, section: 'expenses', category: 'cost_of_services' },
-    { id: '30', number: 30, name: 'Վաճառված ծառայությունների վարձակալություն', value: 0, section: 'expenses', category: 'cost_of_services' },
-    { id: '31', number: 31, name: 'Վաճառված ծառայությունների այլ ծախսեր', value: 0, section: 'expenses', category: 'cost_of_services' },
-    { id: '32', number: 32, name: 'Վաճառված ծառայությունների ընդհանուր ծախսեր', value: 0, isSubtotal: true, parentRows: [29, 30, 31], section: 'expenses', category: 'cost_of_services_total' },
-    { id: '33', number: 33, name: 'Վարչական ծախսեր', value: 0, isSubtotal: true, parentRows: [33.1, 33.2, 33.3, 33.4, 33.5, 33.6], section: 'expenses', category: 'administrative' },
-    { id: '34', number: 34, name: 'Վաճառքի ծախսեր', value: 0, isSubtotal: true, parentRows: [34.1, 34.2], section: 'expenses', category: 'sales' },
-    { id: '35', number: 35, name: 'Ֆինանսական ծախսեր', value: 0, section: 'expenses', category: 'financial' },
-    { id: '36', number: 36, name: 'Այլ ծախսեր', value: 0, isSubtotal: true, parentRows: [36.1, 36.2], section: 'expenses', category: 'other' },
-    { id: '37', number: 37, name: 'Արտասահմանյան գործունեության ծախսեր', value: 0, section: 'expenses', category: 'foreign' },
-    { id: '38', number: 38, name: 'Արտասահմանյան ներդրումների ծախսեր', value: 0, section: 'expenses', category: 'foreign' },
-    { id: '39', number: 39, name: 'Արտասահմանյան ակտիվների վաճառքի ծախսեր', value: 0, section: 'expenses', category: 'foreign' },
-    { id: '40', number: 40, name: 'Արտասահմանյան ակտիվների վարձակալության ծախսեր', value: 0, section: 'expenses', category: 'foreign' },
-    { id: '41', number: 41, name: 'Արտասահմանյան ակտիվների այլ օգտագործման ծախսեր', value: 0, section: 'expenses', category: 'foreign' },
-    { id: '42', number: 42, name: 'Արտասահմանյան գործունեության ծախսեր (հարկային)', value: 0, section: 'expenses', category: 'foreign_taxable' },
-    { id: '43', number: 43, name: 'Արտասահմանյան ներդրումների ծախսեր (հարկային)', value: 0, section: 'expenses', category: 'foreign_taxable' },
-    { id: '44', number: 44, name: 'Արտասահմանյան ակտիվների ծախսեր (հարկային)', value: 0, section: 'expenses', category: 'foreign_taxable' },
-    { id: '45', number: 45, name: 'Ընդամենը ծախսեր', value: 0, isCalculated: true, formula: 'SUM(25-44)', section: 'expenses', category: 'total' },
+    // Expenses (Rows 25-45) — Source: cal.xlsx (sheet: շահութահարկ)
+    { id: '25', number: 25, name: 'Մատակարարված ապրանքների սկզբնական արժեքը', value: 0, section: 'expenses', category: 'cost_of_goods' },
+    { id: '26', number: 26, name: 'Մատակարարված արտադրանքի արտադրության հետ անմիջականորեն կապված ծախսը', value: 0, section: 'expenses', category: 'cost_of_goods' },
+    { id: '27', number: 27, name: 'Աշխատանքների կատարման հետ անմիջականորեն կապված ծախսը', value: 0, section: 'expenses', category: 'cost_of_services' },
+    { id: '28', number: 28, name: 'Ծառայությունների մատուցման հետ անմիջականորեն կապված ծախսը', value: 0, section: 'expenses', category: 'cost_of_services' },
+    { id: '29', number: 29, name: 'Միջնորդական պայմանագրերի շրջանակներում իրականացված գործարքների հետ անմիջականորեն կապված ծախսը', value: 0, section: 'expenses', category: 'other' },
+    { id: '30', number: 30, name: 'Օտարված հիմնական միջոցների հաշվեկշռային արժեքը', value: 0, section: 'expenses', category: 'other' },
+    { id: '31', number: 31, name: 'Օտարված ոչ նյութական ակտիվների հաշվեկշռային արժեքը', value: 0, section: 'expenses', category: 'other' },
+    { id: '32', number: 32, name: 'Օտարված այլ ակտիվների հաշվեկշռային արժեքը', value: 0, section: 'expenses', category: 'other' },
+
+    { id: '33', number: 33, name: 'Վարչական ծախսերը, այդ թվում`', value: 0, isSubtotal: true, parentRows: [33.1, 33.2, 33.3, 33.4, 33.5, 33.6], section: 'expenses', category: 'administrative' },
+    { id: '33.1', number: 33.1, name: '1) ՀՀ տարածքից դուրս գործուղման հետ կապված ծախսերը', value: 0, section: 'expenses', category: 'administrative' },
+    { id: '33.2', number: 33.2, name: '2) ՀՀ տարածքում գործուղման հետ կապված ծախսերը', value: 0, section: 'expenses', category: 'administrative' },
+    { id: '33.3', number: 33.3, name: '3) Ներկայացուցչական ծախսերը', value: 0, section: 'expenses', category: 'administrative' },
+    { id: '33.4', number: 33.4, name: '4) Կառավարման ծառայությունների գծով ծախսերը', value: 0, section: 'expenses', category: 'administrative' },
+    { id: '33.5', number: 33.5, name: '5) Խորհրդատվական ծառայությունների գծով ծախսերը', value: 0, section: 'expenses', category: 'administrative' },
+    { id: '33.6', number: 33.6, name: '6) Տեղեկատվական ծառայությունների գծով ծախսերը', value: 0, section: 'expenses', category: 'administrative' },
+
+    { id: '34', number: 34, name: 'Իրացման ծախսերը, այդ թվում`', value: 0, isSubtotal: true, parentRows: [34.1, 34.2], section: 'expenses', category: 'sales' },
+    { id: '34.1', number: 34.1, name: '1) Գովազդի գծով ծախսերը', value: 0, section: 'expenses', category: 'sales' },
+    { id: '34.2', number: 34.2, name: '2) Մարկետինգի գծով ծախսերը', value: 0, section: 'expenses', category: 'sales' },
+
+    { id: '35', number: 35, name: 'Ոչ արտադրական բնույթի ծախսերը', value: 0, section: 'expenses', category: 'other' },
+
+    { id: '36', number: 36, name: 'Ֆինանսական ծախսերը, այդ թվում`', value: 0, isSubtotal: true, parentRows: [36.1, 36.2], section: 'expenses', category: 'financial' },
+    { id: '36.1', number: 36.1, name: '1) Վարկերի, ինչպես նաև բանկերից և վարկային կազմակերպություններից ներգրավված փոխառությունների գծով տոկոսը', value: 0, section: 'expenses', category: 'financial' },
+    { id: '36.2', number: 36.2, name: '2) Բանկ և (կամ) վարկային կազմակերպություն չհամարվող սուբյեկտներից ներգրավված փոխառությունների գծով տոկոսը', value: 0, section: 'expenses', category: 'financial' },
+
+    { id: '37', number: 37, name: 'Ֆիզիկական անձանց օգնության, սննդի կազմակերպման, նրանց համար սոցիալ-մշակութային միջոցառումների կազմակերպման և համանման այլ ծախսերը', value: 0, section: 'expenses', category: 'other' },
+    { id: '38', number: 38, name: 'Ապահովագրական և վերաապահովագրական ծախսը', value: 0, section: 'expenses', category: 'other' },
+    { id: '39', number: 39, name: 'Վարձակալական վճարի կամ սերվիտուտի գծով ծախսը', value: 0, section: 'expenses', category: 'other' },
+    { id: '40', number: 40, name: 'Պատճառված վնասի (կրած կորստի) հատուցման գծով ծախսը', value: 0, section: 'expenses', category: 'other' },
+    { id: '41', number: 41, name: 'Տույժերի, տուգանքների և գույքային այլ պատժամիջոցների տեսքով ծախսը', value: 0, section: 'expenses', category: 'other' },
+    { id: '42', number: 42, name: 'Չփոխհատուցվող և սահմանված կարգով չհաշվանցվող (չպակասեցվող) հարկերի, տուրքերի և վճարների գծով ծախսը', value: 0, section: 'expenses', category: 'other' },
+    { id: '43', number: 43, name: 'Հաշվանցման (պակասեցման) ենթակա ԱԱՀ-ի գումարներից նվազեցվող գումարների գծով ծախսը', value: 0, section: 'expenses', category: 'other' },
+    { id: '44', number: 44, name: 'Այլ ծախսերը', value: 0, section: 'expenses', category: 'other' },
+    { id: '45', number: 45, name: 'Ընդամենը ծախսերը (25-44-րդ կետերում նշված ծախսերի հանրագումարը)', value: 0, isCalculated: true, formula: 'SUM(25-44)', section: 'expenses', category: 'total' },
     
     // Losses (Rows 46-49)
     { id: '46', number: 46, name: 'Արտասահմանյան գործունեության կորուստներ', value: 0, section: 'losses', category: 'foreign' },
@@ -102,38 +117,38 @@ const ArmenianTaxCalculator = () => {
     { id: '49', number: 49, name: 'Այլ կորուստներ', value: 0, section: 'losses', category: 'other' },
     { id: '50', number: 50, name: 'Ընդամենը կորուստներ', value: 0, isCalculated: true, formula: 'SUM(46-49)', section: 'losses', category: 'total' },
     
-    // Reductions (Rows 51-65)
-    { id: '51', number: 51, name: 'Արտասահմանյան գործունեության նվազեցումներ', value: 0, section: 'reductions', category: 'foreign' },
-    { id: '52', number: 52, name: 'Արտասահմանյան ներդրումների նվազեցումներ', value: 0, section: 'reductions', category: 'foreign' },
-    { id: '53', number: 53, name: 'Արտասահմանյան ակտիվների նվազեցումներ', value: 0, section: 'reductions', category: 'foreign' },
-    { id: '54', number: 54, name: 'Արտասահմանյան գործունեության նվազեցումներ (հարկային)', value: 0, section: 'reductions', category: 'foreign_taxable' },
-    { id: '55', number: 55, name: 'Արտասահմանյան ներդրումների նվազեցումներ (հարկային)', value: 0, section: 'reductions', category: 'foreign_taxable' },
-    { id: '56', number: 56, name: 'Արտասահմանյան ակտիվների նվազեցումներ (հարկային)', value: 0, section: 'reductions', category: 'foreign_taxable' },
-    { id: '57', number: 57, name: 'Արտասահմանյան գործունեության նվազեցումներ (հարկային)', value: 0, section: 'reductions', category: 'foreign_taxable' },
-    { id: '58', number: 58, name: 'Արտասահմանյան ներդրումների նվազեցումներ (հարկային)', value: 0, section: 'reductions', category: 'foreign_taxable' },
-    { id: '59', number: 59, name: 'Արտասահմանյան ակտիվների նվազեցումներ (հարկային)', value: 0, section: 'reductions', category: 'foreign_taxable' },
-    { id: '60', number: 60, name: 'Արտասահմանյան գործունեության նվազեցումներ (հարկային)', value: 0, section: 'reductions', category: 'foreign_taxable' },
-    { id: '61', number: 61, name: 'Արտասահմանյան ներդրումների նվազեցումներ (հարկային)', value: 0, section: 'reductions', category: 'foreign_taxable' },
-    { id: '62', number: 62, name: 'Արտասահմանյան ակտիվների նվազեցումներ (հարկային)', value: 0, section: 'reductions', category: 'foreign_taxable' },
-    { id: '63', number: 63, name: 'Արտասահմանյան գործունեության նվազեցումներ (հարկային)', value: 0, section: 'reductions', category: 'foreign_taxable' },
-    { id: '64', number: 64, name: 'Արտասահմանյան ներդրումների նվազեցումներ (հարկային)', value: 0, section: 'reductions', category: 'foreign_taxable' },
-    { id: '65', number: 65, name: 'Արտասահմանյան ակտիվների նվազեցումներ (հարկային)', value: 0, section: 'reductions', category: 'foreign_taxable' },
-    { id: '66', number: 66, name: 'Ընդամենը նվազեցումներ', value: 0, isCalculated: true, formula: 'SUM(51-65)', section: 'reductions', category: 'total' },
+    // Reductions (Rows 51-66) — Source: cal.xlsx (sheet: շահութահարկ)
+    { id: '51', number: 51, name: 'Անվավեր ճանաչված գործարքների մասով նախորդ հաշվետու ժամանակաշրջաններում հարկման բազայի որոշման նպատակով համախառն եկամտում ներառված գումարների վերաձևակերպումից նվազեցումը', value: 0, section: 'reductions', category: 'other' },
+    { id: '52', number: 52, name: 'Անհուսալի դեբիտորական պարտքերի դուրսգրման համար պահուստին կատարվող մասհանումները', value: 0, section: 'reductions', category: 'other' },
+    { id: '53', number: 53, name: 'Անհուսալի դեբիտորական պարտքերի դուրսգրման դեպքում` այդ նպատակով ստեղծված պահուստին կատարված մասհանումները գերազանցող գումարները', value: 0, section: 'reductions', category: 'other' },
+    { id: '54', number: 54, name: 'Նախկինում դուրս գրված անհուսալի կրեդիտորական պարտքերի մարման գումարները', value: 0, section: 'reductions', category: 'other' },
+    { id: '55', number: 55, name: 'Բանկերի, վարկային կազմակերպությունների, ապահովագրական ընկերությունների և արժեթղթերի շուկայի մասնագիտացված անձանց ակտիվների և (կամ) ինվեստիցիոն արժեթղթերի հնարավոր կորուստների պահուստներին ուղղված գումարները', value: 0, section: 'reductions', category: 'other' },
+    { id: '56', number: 56, name: 'Բանկերի, վարկային կազմակերպությունների, ապահովագրական ընկերությունների և արժեթղթերի շուկայի մասնագիտացված անձանց կողմից կատարվող ապահովագրական և վերաապահովագրական հատուցումները', value: 0, section: 'reductions', category: 'other' },
+    { id: '57', number: 57, name: 'Ապահովագրական ընկերությունների տեխնիկական պահուստների, տեխնիկական պահուստներում վերաապահովագրողի մասնաբաժնի գծով կատարվող ծախսերը', value: 0, section: 'reductions', category: 'other' },
+    { id: '58', number: 58, name: 'Բանկերի, վարկային կազմակերպությունների, ապահովագրական ընկերությունների և արժեթղթերի շուկայի մասնագիտացված անձանց՝ կեղծ թղթադրամների և վճարային փաստաթղթերի պատճառով կրած կորուստները', value: 0, section: 'reductions', category: 'other' },
+    { id: '59', number: 59, name: 'Հարկային տարվան նախորդող 5 հարկային տարիների գործունեության արդյունքներով առաջացած հարկային վնասը', value: 0, section: 'reductions', category: 'other' },
+    { id: '60', number: 60, name: 'Գրադարաններին, թանգարաններին, հանրակրթական դպրոցներին, տուն-գիշերօթիկներին, ծերանոցներին, մանկատներին, բժշկական հաստատություններին, ինչպես նաև ոչ առևտրային կազմակերպություններին տրամադրված ակտիվների, դրանց համար կատարված աշխատանքների և (կամ) դրանց մատուցված ծառայությունների արժեքը', value: 0, section: 'reductions', category: 'other' },
+    { id: '61', number: 61, name: 'Վարձու աշխատող համարվող, ինչպես նաև քաղաքացիաիրավական պայմանագրի հիման վրա աշխատանք կատարող կամ ծառայություն մատուցող յուրաքանչյուր հաշմանդամի համար հաշվարկված աշխատավարձի և դրան հավասարեցված այլ վճարումների, ինչպես նաև քաղաքացիաիրավական պայմանագրից ստացվող եկամուտների հանրագումարի 150%-ը', value: 0, section: 'reductions', category: 'other' },
+    { id: '62', number: 62, name: 'Ածանցյալ ֆինանսական գործիքների միասնական գրանցամատյանում գրանցված ածանցյալ ֆինանսական գործիքներով կատարվող` պարտավորությունների հաշվանցի  և (կամ) զուտացման արդյունքում ձևավորված վճարումների գծով ծախսը', value: 0, section: 'reductions', category: 'other' },
+    { id: '63', number: 63, name: 'Ռեզիդենտ շահութահարկ վճարողի շահաբաժինները', value: 0, section: 'reductions', category: 'other' },
+    { id: '64', number: 64, name: 'Անհատ ձեռնարկատիրոջ կամ նոտարի կամավոր կենսաթոշակային վճար', value: 0, section: 'reductions', category: 'other' },
+    { id: '65', number: 65, name: 'Այլ նվազեցումներ', value: 0, section: 'reductions', category: 'other' },
+    { id: '66', number: 66, name: 'Ընդամենը այլ նվազեցումները (51-65-րդ կետերում նշված այլ նվազեցումների հանրագումարը)', value: 0, isCalculated: true, formula: 'SUM(51-65)', section: 'reductions', category: 'total' },
     
-    // Main Calculations (Rows 67-79)
-    { id: '67', number: 67, name: 'Ընդամենը ծախսեր, կորուստներ և նվազեցումներ', value: 0, isCalculated: true, formula: 'Row 45 + Row 50 + Row 66', section: 'calculations', category: 'totals' },
-    { id: '68', number: 68, name: 'Հարկվող շահույթ (կորուստ)', value: 0, isCalculated: true, formula: 'Row 24 - Row 67', section: 'calculations', category: 'profit' },
-    { id: '69', number: 69, name: 'Ազատումներ (շահույթի նվազեցումներ)', value: 0, section: 'calculations', category: 'exemptions' },
-    { id: '70', number: 70, name: 'Ճշգրտված հարկվող շահույթ', value: 0, isCalculated: true, formula: 'Row 68 - Row 69', section: 'calculations', category: 'profit' },
-    { id: '71', number: 71, name: 'Հաշվարկված շահութահարկ (18%)', value: 0, isCalculated: true, formula: 'Row 70 × 18%', section: 'calculations', category: 'tax' },
-    { id: '72', number: 72, name: 'Պետական արտոնություններ', value: 0, section: 'calculations', category: 'benefits' },
-    { id: '73', number: 73, name: 'Զեղչային արտոնություններ', value: 0, section: 'calculations', category: 'benefits' },
-    { id: '74', number: 74, name: 'Շահութահարկ ազատումներից հետո', value: 0, isCalculated: true, formula: 'Row 71 - Row 72 - Row 73', section: 'calculations', category: 'tax' },
-    { id: '75', number: 75, name: 'Նախավճարներ', value: 0, section: 'calculations', category: 'prepayments' },
-    { id: '76', number: 76, name: 'Հարկ նախավճարների հանումից հետո', value: 0, isCalculated: true, formula: 'Row 74 - Row 75', section: 'calculations', category: 'tax' },
-    { id: '77', number: 77, name: 'Նախորդ տարիների չհաշվառված նվազագույն հարկ', value: 0, section: 'calculations', category: 'adjustments' },
-    { id: '78', number: 78, name: 'Վճարման ենթակա շահութահարկ', value: 0, isCalculated: true, formula: 'Row 76 - Row 77', section: 'calculations', category: 'final' },
-    { id: '79', number: 79, name: 'Հաջորդ տարիներ փոխանցվող հարկ', value: 0, isCalculated: true, formula: 'IF(Row 78 < 0, Row 78, 0)', section: 'calculations', category: 'final' }
+    // Main Calculations (Rows 67-79) — Source: cal.xlsx (sheet: շահութահարկ)
+    { id: '67', number: 67, name: 'Ընդամենը ծախսեր և նվազեցումներ  ([կետ 45]+[կետ 50]+ [կետ 66] )', value: 0, isCalculated: true, formula: 'Row 45 + Row 50 + Row 66', section: 'calculations', category: 'totals' },
+    { id: '68', number: 68, name: 'Հարկվող շահույթը կամ հարկային վնասը (կետ 24 - կետ 67)', value: 0, isCalculated: true, formula: 'Row 24 - Row 67', section: 'calculations', category: 'profit' },
+    { id: '69', number: 69, name: 'Հարկվող շահույթի նվազեցման (այդ թվում` շահութահարկի վճարումից եկամուտների ազատման) արտոնությունները', value: 0, section: 'calculations', category: 'exemptions' },
+    { id: '70', number: 70, name: 'Հարկվող շահույթը` հաշվի առած հարկվող շահույթի նվազեցման (այդ թվում` շահութահարկի վճարումից եկամուտների ազատման) արտոնությունները (կետ 68 - կետ 69)', value: 0, isCalculated: true, formula: 'Row 68 - Row 69', section: 'calculations', category: 'profit' },
+    { id: '71', number: 71, name: 'Հաշվետու տարվա շահութահարկի գումարը', value: 0, isCalculated: true, formula: 'Row 70 × 18%', section: 'calculations', category: 'tax' },
+    { id: '72', number: 72, name: 'Հայաստանի Հանրապետության կառավարության որոշմամբ հավանության արժանացած գործարար ծրագիր իրականացնող ռեզիդենտ շահութահարկ վճարողի՝ շահութահարկի նվազեցման արտոնության հետևանքով նվազեցվող շահութահարկի գումարը', value: 0, section: 'calculations', category: 'benefits' },
+    { id: '73', number: 73, name: 'Առանձին խմբերի քաղաքացիներին օրենքով կամ օրենքով սահմանված դեպքերում՝ Հայաստանի Հանրապետության կառավարության որոշմամբ սահմանված զեղչ սակագներով կամ անվճար ծառայություններ մատուցող ռեզիդենտ շահութահարկ վճարողի՝ շահութահարկի նվազեցման արտոնության հետևանքով նվազեցվող շահութահարկի գումարը', value: 0, section: 'calculations', category: 'benefits' },
+    { id: '74', number: 74, name: 'Շահութահարկի գումարը` շահութահարկի նվազեցման արտոնությունները նվազեցնելուց հետո (կետ 71 - կետ 72 -կետ 73)', value: 0, isCalculated: true, formula: 'Row 71 - Row 72 - Row 73', section: 'calculations', category: 'tax' },
+    { id: '75', number: 75, name: 'Հաշվետու տարում շահութահարկի հաշվարկված կանխավճարների հանրագումարը', value: 0, section: 'calculations', category: 'prepayments' },
+    { id: '76', number: 76, name: 'Շահութահարկի գումարը` հաշվետու տարում շահութահարկի կանխավճարների հանրագումարը նվազեցնելուց հետո (կետ 74 - կետ 75)', value: 0, isCalculated: true, formula: 'Row 74 - Row 75', section: 'calculations', category: 'tax' },
+    { id: '77', number: 77, name: 'Նախորդ տարիներում վճարված և շահութահարկի գումարից չհաշվանցված նվազագույն շահութահարկի գումարը', value: 0, section: 'calculations', category: 'adjustments' },
+    { id: '78', number: 78, name: 'Վճարման ենթակա շահութահարկի գումարը (կետ 76 -կետ 77)', value: 0, isCalculated: true, formula: 'Row 76 - Row 77', section: 'calculations', category: 'final' },
+    { id: '79', number: 79, name: 'Հաջորդ տարիներ փոխանցվող` չհաշվանցված նվազագույն շահութահարկի գումարը', value: 0, isCalculated: true, formula: 'IF(Row 78 < 0, Row 78, 0)', section: 'calculations', category: 'final' }
   ]);
 
   const updateRow = (id: string, value: number) => {
@@ -249,10 +264,18 @@ const ArmenianTaxCalculator = () => {
     });
 
     // Calculate main totals
-    const totalIncomes = updatedRows.filter(r => r.number >= 1 && r.number <= 23).reduce((sum, row) => sum + row.value, 0);
-    const totalExpenses = updatedRows.filter(r => r.number >= 25 && r.number <= 44).reduce((sum, row) => sum + row.value, 0);
-    const totalLosses = updatedRows.filter(r => r.number >= 46 && r.number <= 49).reduce((sum, row) => sum + row.value, 0);
-    const totalReductions = updatedRows.filter(r => r.number >= 51 && r.number <= 65).reduce((sum, row) => sum + row.value, 0);
+    const totalIncomes = updatedRows
+      .filter(r => Number.isInteger(r.number) && r.number >= 1 && r.number <= 23)
+      .reduce((sum, row) => sum + row.value, 0);
+    const totalExpenses = updatedRows
+      .filter(r => Number.isInteger(r.number) && r.number >= 25 && r.number <= 44)
+      .reduce((sum, row) => sum + row.value, 0);
+    const totalLosses = updatedRows
+      .filter(r => Number.isInteger(r.number) && r.number >= 46 && r.number <= 49)
+      .reduce((sum, row) => sum + row.value, 0);
+    const totalReductions = updatedRows
+      .filter(r => Number.isInteger(r.number) && r.number >= 51 && r.number <= 65)
+      .reduce((sum, row) => sum + row.value, 0);
     
     const totalCostsAndReductions = totalExpenses + totalLosses + totalReductions;
     const taxableProfit = totalIncomes - totalCostsAndReductions;

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ImageUploadController extends Controller
 {
@@ -25,14 +26,49 @@ class ImageUploadController extends Controller
         // Store the file
         $path = $file->storeAs($folder, $filename, 'public');
         
-        // Return just the relative path, let the model accessor handle the full URL
-        $relativePath = Storage::disk('public')->url($path);
+        $baseUrl = rtrim($request->getSchemeAndHttpHost(), '/');
+        // Use API route for blog-images so it works without public/storage symlink
+        $url = $folder === 'blog-images'
+            ? $baseUrl . '/api/blog-images/' . $filename
+            : $baseUrl . '/storage/' . ltrim($path, '/');
         
         return response()->json([
             'success' => true,
-            'url' => $relativePath,
+            'url' => $url,
             'path' => $path,
             'filename' => $filename
         ]);
+    }
+
+    /**
+     * Serve a blog image from storage. Use this so /storage/ symlink is not required on production.
+     */
+    public function serveBlogImage(string $filename): StreamedResponse|\Illuminate\Http\Response
+    {
+        $path = 'blog-images/' . $filename;
+        if (!Storage::disk('public')->exists($path)) {
+            abort(404);
+        }
+        $mime = match (strtolower(pathinfo($filename, PATHINFO_EXTENSION))) {
+            'jpg', 'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+            'gif' => 'image/gif',
+            'webp' => 'image/webp',
+            default => 'application/octet-stream',
+        };
+        return response()->stream(
+            function () use ($path) {
+                $stream = Storage::disk('public')->readStream($path);
+                if ($stream) {
+                    fpassthru($stream);
+                    fclose($stream);
+                }
+            },
+            200,
+            [
+                'Content-Type' => $mime,
+                'Cache-Control' => 'public, max-age=31536000',
+            ]
+        );
     }
 }

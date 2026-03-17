@@ -5,6 +5,27 @@ import { Link } from 'react-router-dom';
 import { laravelApi } from "@/integrations/laravel/client";
 import { useEffect, useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
+import { useLanguage } from "@/contexts/LanguageContext";
+const LARAVEL_ORIGIN = (() => {
+  const url = import.meta.env.VITE_LARAVEL_API_URL || "https://amroyancons.am/api";
+  try {
+    return new URL(url).origin;
+  } catch {
+    return (url && typeof url === 'string' ? url.replace(/\/api\/?$/, "") : "") || "http://127.0.0.1:8000";
+  }
+})();
+
+function absoluteImageUrl(url: string): string {
+  if (!url) return url;
+  if (url.includes("/api/storage/")) {
+    const path = url.replace(/^https?:\/\/[^/]+\/api\/storage\//, "/storage/");
+    return LARAVEL_ORIGIN.replace(/\/$/, "") + path;
+  }
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  const base = LARAVEL_ORIGIN.replace(/\/$/, "");
+  return base + (url.startsWith("/") ? url : "/" + url);
+}
+
 interface BlogPost {
   id: string;
   title: string;
@@ -16,16 +37,16 @@ interface BlogPost {
   slug: string;
   featured: boolean;
   published: boolean;
+  featured_image?: string;
   created_at: string;
 }
 const Blog = () => {
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string>('Բոլորը');
-  const {
-    toast
-  } = useToast();
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const { toast } = useToast();
+  const { t } = useLanguage();
   useEffect(() => {
     fetchBlogPosts();
     checkAdminStatus();
@@ -37,8 +58,8 @@ const Blog = () => {
     } catch (error) {
       console.error('Error fetching blog posts:', error);
       toast({
-        title: "Սխալ",
-        description: "Չհաջողվեց բեռնել բլոգի գրառումները",
+        title: t('blog.toast.error'),
+        description: t('blog.toast.loadFailed'),
         variant: "destructive"
       });
     } finally {
@@ -58,15 +79,15 @@ const Blog = () => {
   };
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Բեռնում...</div>
+        <div className="text-lg">{t('blog.loading')}</div>
       </div>;
   }
-  const filteredPosts = selectedCategory === 'Բոլորը'
+  const filteredPosts = selectedCategory === 'all'
     ? blogPosts
     : blogPosts.filter(p => p.category === selectedCategory);
   const featuredPost = filteredPosts.find(p => p.featured) || filteredPosts[0];
   const otherPosts = featuredPost ? filteredPosts.filter(p => p.slug !== featuredPost.slug) : filteredPosts;
-  const categories = ['Բոլորը', 'Հարկային', 'Ֆինանսներ', 'Տեխնոլոգիաներ', 'Բիզնես', 'Տնտեսություն', 'HR', 'Հեղինակային'];
+  const categoryValues = ['all', 'Հարկային', 'Ֆինանսներ', 'Տեխնոլոգիաներ', 'Բիզնես', 'Տնտեսություն', 'HR', 'Հեղինակային'];
   return <div className="pt-20">
       {/* Hero Section */}
       <section className="py-20 bg-gradient-to-br from-black via-gray-900 to-black network-bg">
@@ -74,7 +95,7 @@ const Blog = () => {
           <div className="max-w-4xl mx-auto text-center">
             <div className="flex justify-center items-center gap-4 mb-8">
               <h1 className="text-5xl md:text-6xl font-bold">
-                <span className="gradient-text text-4xl">Նորություններ</span>
+                <span className="gradient-text text-4xl">{t('blog.heroTitle')}</span>
               </h1>
               {isAdmin && <Link to="/admin/blog/new">
                   
@@ -90,13 +111,21 @@ const Blog = () => {
           <div className="container mx-auto px-4">
             <div className="max-w-6xl mx-auto">
               <h2 className="text-3xl font-bold mb-12 text-center">
-                <span className="gradient-text">Առաջնային հոդված</span>
+                <span className="gradient-text">{t('blog.featuredTitle')}</span>
               </h2>
               
               <Card className="bg-gradient-to-br from-gray-900 to-black border-gold-500/20 overflow-hidden">
                 <div className="grid grid-cols-1 lg:grid-cols-2">
-                  <div className="aspect-video lg:aspect-auto bg-gradient-to-br from-gold-500/20 to-gold-600/20 flex items-center justify-center">
-                    <div className="text-6xl text-gold-400">📊</div>
+                  <div className="aspect-video lg:aspect-auto bg-gradient-to-br from-gold-500/20 to-gold-600/20 flex items-center justify-center overflow-hidden">
+                    {featuredPost.featured_image ? (
+                      <img
+                        src={absoluteImageUrl(featuredPost.featured_image)}
+                        alt={featuredPost.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="text-6xl text-gold-400">📊</div>
+                    )}
                   </div>
                   
                   <CardContent className="p-8 lg:p-12 flex flex-col">
@@ -133,7 +162,7 @@ const Blog = () => {
                       
                       <Button asChild variant="ghost" className="text-gold-400 hover:text-gold-300">
                         <Link to={`/blog/${featuredPost.slug}`}>
-                          Կարդալ ավելին <ArrowRight size={16} className="ml-2" />
+                          {t('blog.readMore')} <ArrowRight size={16} className="ml-2" />
                         </Link>
                       </Button>
                     </div>
@@ -148,7 +177,7 @@ const Blog = () => {
       <section className="py-8 bg-gradient-to-b from-black to-gray-900">
         <div className="container mx-auto px-4">
           <div className="flex flex-wrap justify-center gap-4">
-            {categories.map((category, index) => (
+            {categoryValues.map((category, index) => (
               <Button
                 key={index}
                 onClick={() => setSelectedCategory(category)}
@@ -157,7 +186,7 @@ const Blog = () => {
                   ? "bg-gradient-to-r from-gold-500 to-gold-600 text-black"
                   : "border-gold-500/30 text-gray-300 hover:bg-gold-500/10 hover:text-gold-400"}
               >
-                {category}
+                {category === 'all' ? t('blog.allCategory') : category}
               </Button>
             ))}
           </div>
@@ -168,12 +197,19 @@ const Blog = () => {
       <section className="py-20 bg-gradient-to-b from-gray-900 to-black">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {otherPosts.map(post => <Card key={post.slug} className="bg-gradient-to-b from-gray-900 to-black border-gold-500/20 hover:border-gold-400/40 transition-all duration-300 group flex flex-col">
+            {otherPosts.map(post => <Card key={post.slug} className="bg-gradient-to-b from-gray-900 to-black border-gold-500/20 hover:border-gold-400/40 transition-all duration-300 group flex flex-col overflow-hidden">
+                <div className="aspect-video w-full bg-gradient-to-br from-gold-500/20 to-gold-600/20 flex items-center justify-center shrink-0">
+                  {post.featured_image ? (
+                    <img
+                      src={absoluteImageUrl(post.featured_image)}
+                      alt={post.title}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="text-4xl text-gold-400">📄</div>
+                  )}
+                </div>
                 <CardHeader className="pb-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-gold-500 to-gold-600 rounded-lg flex items-center justify-center mb-4 group-hover:animate-pulse">
-                    <div className="text-black">📄</div>
-                  </div>
-                  
                   <div className="flex items-center space-x-3 mb-3">
                     <span className="bg-gold-500/20 text-gold-400 px-2 py-1 rounded text-xs">
                       {post.category}
@@ -206,9 +242,7 @@ const Blog = () => {
                     </div>
                     
                     <Button asChild variant="ghost" size="sm" className="text-gold-400 hover:text-gold-300 p-2">
-                      <Link to={`/blog/${post.slug}`}>
-                        <ArrowRight size={16} />
-                      </Link>
+                      <Link to={`/blog/${post.slug}`}>{t('blog.readMore')} <ArrowRight size={16} className="ml-1" /></Link>
                     </Button>
                   </div>
                 </CardContent>

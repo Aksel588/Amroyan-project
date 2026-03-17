@@ -25,124 +25,125 @@ interface CalculationResult {
 }
 
 const TurnoverTaxCalculator = () => {
+  // Rows 1-5: turnover + direct cost + admin cost inputs; deduction % and min tax % fixed. Rows 6-11: only turnover, fixed rate.
   const [activities, setActivities] = useState<ActivityRow[]>([
     {
       id: '1',
-      name: 'Առևտուր',
+      name: 'Սննդառական և խմիչքի, այլ սննդամթերքի արտադրությունից ստացվող եկամուտների մասով հարկի հաշվարկ',
       turnover: 0,
       directCosts: 0,
       adminCosts: 0,
-      taxRate: 1.5,
-      deductionPercent: 0.3,
-      minTaxPercent: 0.5,
+      taxRate: 7,
+      deductionPercent: 5,
+      minTaxPercent: 1.24,
       isFixedRate: false
     },
     {
       id: '2',
-      name: 'Արտադրություն',
+      name: 'Ապահովագրական ակտիվների օտարումից ստացվող եկամուտների մասով հարկի հաշվարկ',
       turnover: 0,
       directCosts: 0,
       adminCosts: 0,
-      taxRate: 1.5,
-      deductionPercent: 0.3,
-      minTaxPercent: 0.5,
+      taxRate: 12,
+      deductionPercent: 9,
+      minTaxPercent: 1.5,
       isFixedRate: false
     },
     {
       id: '3',
-      name: 'Հասարակական սնունդ',
+      name: 'Քաղաքացիական իրավական բնույթի պայմանագրերով մատուցվող ծառայությունների դիմաց ֆիզիկական անձանց կողմից ստացվող եկամուտներ',
       turnover: 0,
       directCosts: 0,
       adminCosts: 0,
-      taxRate: 1.5,
-      deductionPercent: 0.3,
-      minTaxPercent: 0.5,
+      taxRate: 0,
+      deductionPercent: 2,
+      minTaxPercent: 4,
       isFixedRate: false
     },
     {
       id: '4',
-      name: 'Այլ գործունեություն',
+      name: 'Գործունեությունից ստացվող եկամուտների մասով հարկի հաշվարկ',
       turnover: 0,
       directCosts: 0,
       adminCosts: 0,
-      taxRate: 1.5,
-      deductionPercent: 0.3,
-      minTaxPercent: 0.5,
+      taxRate: 5,
+      deductionPercent: 0,
+      minTaxPercent: 4.5,
       isFixedRate: false
     },
     {
       id: '5',
-      name: 'Ծառայություններ',
+      name: 'Այլ գործունեությունից ստացվող եկամուտների մասով հարկի հաշվարկ',
       turnover: 0,
       directCosts: 0,
       adminCosts: 0,
       taxRate: 1.5,
-      deductionPercent: 0.3,
-      minTaxPercent: 0.5,
+      deductionPercent: 1.5,
+      minTaxPercent: 1.5,
       isFixedRate: false
     },
     {
       id: '6',
-      name: 'Ավտոմոբիլային տրանսպորտ',
+      name: 'Երկրորդային շրջանառության հարկի հաշվարկ',
       turnover: 0,
       directCosts: 0,
       adminCosts: 0,
-      taxRate: 0.5,
+      taxRate: 10,
       deductionPercent: 0,
       minTaxPercent: 0,
       isFixedRate: true
     },
     {
       id: '7',
-      name: 'Ոչ ավտոմոբիլային տրանսպորտ',
+      name: 'Բանկային գործառնություններից ստացվող եկամուտներ',
       turnover: 0,
       directCosts: 0,
       adminCosts: 0,
-      taxRate: 0.5,
+      taxRate: 20,
       deductionPercent: 0,
       minTaxPercent: 0,
       isFixedRate: true
     },
     {
       id: '8',
-      name: 'Կապի ծառայություններ',
+      name: 'Վարկային կազմակերպությունների կողմից ստացվող եկամուտներ',
       turnover: 0,
       directCosts: 0,
       adminCosts: 0,
-      taxRate: 0.5,
+      taxRate: 20,
       deductionPercent: 0,
       minTaxPercent: 0,
       isFixedRate: true
     },
     {
       id: '9',
-      name: 'Արտաքին առևտուր',
+      name: 'Օտարերկրյա արժույթի վաճառքից ստացվող եկամուտներ',
       turnover: 0,
       directCosts: 0,
       adminCosts: 0,
-      taxRate: 0.5,
+      taxRate: 1,
       deductionPercent: 0,
       minTaxPercent: 0,
       isFixedRate: true
     },
     {
       id: '10',
-      name: 'Այլ ֆիքսված դրույքաչափով',
+      name: 'Այլ գործունեությունից ստացվող եկամուտներ',
       turnover: 0,
       directCosts: 0,
       adminCosts: 0,
-      taxRate: 0.5,
+      taxRate: 10,
       deductionPercent: 0,
       minTaxPercent: 0,
       isFixedRate: true
     },
     {
       id: '11',
-      name: 'Այլ ֆիքսված դրույքաչափով 2',
+      name: 'Այլ ակտիվների, այդ թվում՝ անշարժ գույքի օտարումից ստացվող եկամուտներ',
       turnover: 0,
       directCosts: 0,
       adminCosts: 0,
-      taxRate: 0.5,
+      taxRate: 10,
       deductionPercent: 0,
       minTaxPercent: 0,
       isFixedRate: true
@@ -214,10 +215,10 @@ const TurnoverTaxCalculator = () => {
         <CardHeader>
           <CardTitle className="gradient-text text-2xl flex items-center gap-2">
             <Receipt className="w-6 h-6" />
-            Շրջանառության հարկի հաշվիչ
+            Շրջհարկի հաշվիչ
           </CardTitle>
           <CardDescription className="text-gray-400">
-            Հաշվեք եռամսյակային շրջանառության հարկը՝ տարբեր գործունեության տեսակների համար
+            Եռամսյակային շրջհարկի հաշվարկ. Տողեր 1-5՝ շրջանառություն, ինքնարժեք և վարչական/այլ ծախսեր. Տողեր 6-11՝ միայն շրջանառություն. Դրույքաչափներն ու նվազագույն հարկի դրույքը ֆիքսված են:
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -236,16 +237,15 @@ const TurnoverTaxCalculator = () => {
             <table className="w-full border-collapse">
               <thead>
                 <tr className="bg-gray-800">
-                  <th className="border border-gray-600 p-3 text-left text-gold-400 font-semibold">Գործունեության տեսակ</th>
-                  <th className="border border-gray-600 p-3 text-center text-gold-400 font-semibold">Շրջանառություն (AMD)</th>
-                  <th className="border border-gray-600 p-3 text-center text-gold-400 font-semibold">Ինքնարժեք (AMD)</th>
-                  <th className="border border-gray-600 p-3 text-center text-gold-400 font-semibold">Վարչական ծախսեր (AMD)</th>
-                  <th className="border border-gray-600 p-3 text-center text-gold-400 font-semibold">Հարկի դրույքաչափ (%)</th>
-                  <th className="border border-gray-600 p-3 text-center text-gold-400 font-semibold">Ծախսերի հանում (%)</th>
-                  <th className="border border-gray-600 p-3 text-center text-gold-400 font-semibold">Նվազագույն հարկ (%)</th>
-                  <th className="border border-gray-600 p-3 text-center text-gold-400 font-semibold">Նվազագույն հարկ (AMD)</th>
-                  <th className="border border-gray-600 p-3 text-center text-gold-400 font-semibold">Իրական %</th>
-                  <th className="border border-gray-600 p-3 text-center text-gold-400 font-semibold">Վճարման ենթակա հարկ (AMD)</th>
+                  <th className="border border-gray-600 p-2 text-left text-gold-400 font-semibold text-sm">Գործունեություն</th>
+                  <th className="border border-gray-600 p-2 text-center text-gold-400 font-semibold text-sm">Շրջանառության ծավալ, դրամ</th>
+                  <th className="border border-gray-600 p-2 text-center text-gold-400 font-semibold text-sm">Գործունեության հարկի դրույքաչափ</th>
+                  <th className="border border-gray-600 p-2 text-center text-gold-400 font-semibold text-sm">Ինքնարժեք (դրամ)</th>
+                  <th className="border border-gray-600 p-2 text-center text-gold-400 font-semibold text-sm">Իրացման և վարչական, այլ ծախսեր (դրամ)</th>
+                  <th className="border border-gray-600 p-2 text-center text-gold-400 font-semibold text-sm">Նվազեցվող գումարի դրույք (%)</th>
+                  <th className="border border-gray-600 p-2 text-center text-gold-400 font-semibold text-sm">Հարկի նվազագույն գումար (դրամ)</th>
+                  <th className="border border-gray-600 p-2 text-center text-gold-400 font-semibold text-sm">Հարկի փաստացի տոկոս</th>
+                  <th className="border border-gray-600 p-2 text-center text-gold-400 font-semibold text-sm">Վճարման ենթակա հարկ (դրամ)</th>
                 </tr>
               </thead>
               <tbody>
@@ -268,6 +268,9 @@ const TurnoverTaxCalculator = () => {
                           className="bg-gray-700 border-gray-600 text-white text-center"
                         />
                       </td>
+                      <td className="border border-gray-600 p-3 text-center text-gray-300">
+                        {formatPercent(activity.taxRate)}
+                      </td>
                       <td className="border border-gray-600 p-2">
                         <Input
                           type="number"
@@ -289,13 +292,7 @@ const TurnoverTaxCalculator = () => {
                         />
                       </td>
                       <td className="border border-gray-600 p-3 text-center text-gray-300">
-                        {formatPercent(activity.taxRate)}
-                      </td>
-                      <td className="border border-gray-600 p-3 text-center text-gray-300">
                         {activity.isFixedRate ? '-' : formatPercent(activity.deductionPercent)}
-                      </td>
-                      <td className="border border-gray-600 p-3 text-center text-gray-300">
-                        {activity.isFixedRate ? '-' : formatPercent(activity.minTaxPercent)}
                       </td>
                       <td className="border border-gray-600 p-3 text-center text-orange-400 font-semibold">
                         {activity.isFixedRate ? '-' : formatAMD(result.minTaxAmount)}

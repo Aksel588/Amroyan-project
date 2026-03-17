@@ -8,7 +8,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useState, useRef, useEffect } from 'react';
-import { laravelApi } from '@/integrations/laravel/client';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Bold, 
@@ -22,8 +21,6 @@ import {
   Quote,
   Code,
   Link as LinkIcon,
-  Image as ImageIcon,
-  Upload,
   X
 } from 'lucide-react';
 
@@ -39,11 +36,8 @@ const ModernRichTextEditor = ({
   placeholder = "Մուտքագրեք բովանդակությունը..." 
 }: ModernRichTextEditorProps) => {
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
-  const [imageDialogOpen, setImageDialogOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
   const [linkText, setLinkText] = useState('');
-  const [uploadingImage, setUploadingImage] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const editor = useEditor({
@@ -86,18 +80,15 @@ const ModernRichTextEditor = ({
         placeholder: placeholder,
       },
     },
-    onCreate: ({ editor }) => {
-      console.log('Editor created:', editor);
-    },
-    onSelectionUpdate: ({ editor }) => {
-      console.log('Selection updated:', editor.state.selection);
-    },
   });
 
-  // Update editor content when value prop changes
+  // Update editor content when value prop changes (e.g. loading a post)
+  const prevValueRef = useRef(value);
   useEffect(() => {
-    if (editor && value !== editor.getHTML()) {
-      editor.commands.setContent(value || '');
+    if (!editor) return;
+    if (value !== prevValueRef.current) {
+      prevValueRef.current = value;
+      editor.commands.setContent(value || '', false);
     }
   }, [editor, value]);
 
@@ -109,65 +100,19 @@ const ModernRichTextEditor = ({
     );
   }
 
-  const handleImageUpload = async (file: File) => {
-    if (!file) return;
-
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      toast({
-        title: "Սխալ",
-        description: "Խնդրում ենք ընտրել նկար",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Validate file size (max 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      toast({
-        title: "Սխալ",
-        description: "Նկարի չափը չպետք է գերազանցի 10MB",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      setUploadingImage(true);
-      
-      // Upload to Laravel API
-      const response = await laravelApi.uploadImage(file, 'blog-images');
-      
-      // Insert image into editor
-      editor.chain().focus().setImage({ 
-        src: response.url,
-        alt: file.name,
-        title: file.name
-      }).run();
-
-      setImageDialogOpen(false);
-      toast({
-        title: "Հաջողություն",
-        description: "Նկարը հաջողությամբ ավելացվեց",
-      });
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      toast({
-        title: "Սխալ",
-        description: "Չհաջողվեց բեռնավորել նկարը",
-        variant: "destructive",
-      });
-    } finally {
-      setUploadingImage(false);
-    }
-  };
-
   const handleLinkInsert = () => {
-    if (linkUrl && linkText) {
-      editor.chain().focus().setLink({ href: linkUrl }).run();
+    if (linkUrl.trim()) {
+      editor.chain().focus().setLink({ href: linkUrl.trim() }).run();
       setLinkUrl('');
       setLinkText('');
       setLinkDialogOpen(false);
+      toast({ title: "Հղում ավելացվեց", description: "" });
+    } else {
+      toast({
+        title: "Սխալ",
+        description: "Մուտքագրեք URL",
+        variant: "destructive",
+      });
     }
   };
 
@@ -175,42 +120,26 @@ const ModernRichTextEditor = ({
     editor.chain().focus().unsetLink().run();
   };
 
-  const openFileDialog = () => {
-    fileInputRef.current?.click();
-  };
-
   const getCharacterCount = () => {
     const text = editor.getText();
     return text.length;
   };
 
-  // Helper function to safely execute editor commands
-  const executeCommand = (command: () => void) => {
-    try {
-      editor.chain().focus();
-      command();
-      editor.run();
-    } catch (error) {
-      console.error('Editor command error:', error);
-    }
-  };
-
   // Heading button handlers
   const toggleHeading = (level: 1 | 2 | 3) => {
-    console.log(`Toggling heading level ${level}`);
     editor.chain().focus().toggleHeading({ level }).run();
   };
 
-  // List button handlers
   const toggleBulletList = () => {
-    console.log('Toggling bullet list');
     editor.chain().focus().toggleBulletList().run();
   };
 
   const toggleOrderedList = () => {
-    console.log('Toggling ordered list');
     editor.chain().focus().toggleOrderedList().run();
   };
+
+  // Prevent toolbar buttons from stealing focus so the editor keeps selection when applying format
+  const keepEditorFocus = (e: React.MouseEvent) => e.preventDefault();
 
   return (
     <div className="bg-background border rounded-lg overflow-hidden">
@@ -231,6 +160,8 @@ const ModernRichTextEditor = ({
           <Button
             variant={editor.isActive('bold') ? 'default' : 'outline'}
             size="sm"
+            type="button"
+            onMouseDown={keepEditorFocus}
             onClick={() => editor.chain().focus().toggleBold().run()}
             title="Թավ (Ctrl+B)"
             disabled={!editor.isEditable}
@@ -240,24 +171,13 @@ const ModernRichTextEditor = ({
           <Button
             variant={editor.isActive('italic') ? 'default' : 'outline'}
             size="sm"
+            type="button"
+            onMouseDown={keepEditorFocus}
             onClick={() => editor.chain().focus().toggleItalic().run()}
             title="Շեղ (Ctrl+I)"
             disabled={!editor.isEditable}
           >
             <Italic className="h-4 w-4" />
-          </Button>
-          {/* Test button */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              console.log('Test button clicked');
-              console.log('Editor state:', editor.state);
-              console.log('Editor is active:', editor.isActive('heading', { level: 1 }));
-            }}
-            title="Test"
-          >
-            Test
           </Button>
         </div>
 
@@ -268,6 +188,8 @@ const ModernRichTextEditor = ({
           <Button
             variant={editor.isActive('heading', { level: 1 }) ? 'default' : 'outline'}
             size="sm"
+            type="button"
+            onMouseDown={keepEditorFocus}
             onClick={() => toggleHeading(1)}
             title="Վերնագիր 1"
             disabled={!editor.isEditable}
@@ -277,6 +199,8 @@ const ModernRichTextEditor = ({
           <Button
             variant={editor.isActive('heading', { level: 2 }) ? 'default' : 'outline'}
             size="sm"
+            type="button"
+            onMouseDown={keepEditorFocus}
             onClick={() => toggleHeading(2)}
             title="Վերնագիր 2"
             disabled={!editor.isEditable}
@@ -286,6 +210,8 @@ const ModernRichTextEditor = ({
           <Button
             variant={editor.isActive('heading', { level: 3 }) ? 'default' : 'outline'}
             size="sm"
+            type="button"
+            onMouseDown={keepEditorFocus}
             onClick={() => toggleHeading(3)}
             title="Վերնագիր 3"
             disabled={!editor.isEditable}
@@ -301,6 +227,8 @@ const ModernRichTextEditor = ({
           <Button
             variant={editor.isActive('bulletList') ? 'default' : 'outline'}
             size="sm"
+            type="button"
+            onMouseDown={keepEditorFocus}
             onClick={toggleBulletList}
             title="Նշանավորված ցուցակ"
             disabled={!editor.isEditable}
@@ -310,6 +238,8 @@ const ModernRichTextEditor = ({
           <Button
             variant={editor.isActive('orderedList') ? 'default' : 'outline'}
             size="sm"
+            type="button"
+            onMouseDown={keepEditorFocus}
             onClick={toggleOrderedList}
             title="Համարակալված ցուցակ"
             disabled={!editor.isEditable}
@@ -325,6 +255,8 @@ const ModernRichTextEditor = ({
           <Button
             variant={editor.isActive({ textAlign: 'left' }) ? 'default' : 'outline'}
             size="sm"
+            type="button"
+            onMouseDown={keepEditorFocus}
             onClick={() => editor.chain().focus().setTextAlign('left').run()}
             title="Ձախ կողմ"
             disabled={!editor.isEditable}
@@ -334,6 +266,8 @@ const ModernRichTextEditor = ({
           <Button
             variant={editor.isActive({ textAlign: 'center' }) ? 'default' : 'outline'}
             size="sm"
+            type="button"
+            onMouseDown={keepEditorFocus}
             onClick={() => editor.chain().focus().setTextAlign('center').run()}
             title="Կենտրոն"
             disabled={!editor.isEditable}
@@ -343,6 +277,8 @@ const ModernRichTextEditor = ({
           <Button
             variant={editor.isActive({ textAlign: 'right' }) ? 'default' : 'outline'}
             size="sm"
+            type="button"
+            onMouseDown={keepEditorFocus}
             onClick={() => editor.chain().focus().setTextAlign('right').run()}
             title="Աջ կողմ"
             disabled={!editor.isEditable}
@@ -352,6 +288,8 @@ const ModernRichTextEditor = ({
           <Button
             variant={editor.isActive({ textAlign: 'justify' }) ? 'default' : 'outline'}
             size="sm"
+            type="button"
+            onMouseDown={keepEditorFocus}
             onClick={() => editor.chain().focus().setTextAlign('justify').run()}
             title="Հավասարեցնել"
             disabled={!editor.isEditable}
@@ -367,6 +305,8 @@ const ModernRichTextEditor = ({
           <Button
             variant={editor.isActive('blockquote') ? 'default' : 'outline'}
             size="sm"
+            type="button"
+            onMouseDown={keepEditorFocus}
             onClick={() => editor.chain().focus().toggleBlockquote().run()}
             title="Մեջբերում"
             disabled={!editor.isEditable}
@@ -376,6 +316,8 @@ const ModernRichTextEditor = ({
           <Button
             variant={editor.isActive('codeBlock') ? 'default' : 'outline'}
             size="sm"
+            type="button"
+            onMouseDown={keepEditorFocus}
             onClick={() => editor.chain().focus().toggleCodeBlock().run()}
             title="Կոդի բլոկ"
             disabled={!editor.isEditable}
@@ -391,7 +333,15 @@ const ModernRichTextEditor = ({
           <Button
             variant={editor.isActive('link') ? 'default' : 'outline'}
             size="sm"
-            onClick={() => setLinkDialogOpen(true)}
+            type="button"
+            onMouseDown={keepEditorFocus}
+            onClick={() => {
+              const { from, to } = editor.state.selection;
+              const selectedText = editor.state.doc.textBetween(from, to, ' ');
+              setLinkText(selectedText || '');
+              setLinkUrl(editor.getAttributes('link').href || '');
+              setLinkDialogOpen(true);
+            }}
             title="Հղում ավելացնել"
             disabled={!editor.isEditable}
           >
@@ -401,6 +351,8 @@ const ModernRichTextEditor = ({
             <Button
               variant="outline"
               size="sm"
+              type="button"
+              onMouseDown={keepEditorFocus}
               onClick={removeLink}
               title="Հղում հեռացնել"
               disabled={!editor.isEditable}
@@ -408,34 +360,11 @@ const ModernRichTextEditor = ({
               <X className="h-4 w-4" />
             </Button>
           )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setImageDialogOpen(true)}
-            title="Նկար ավելացնել"
-            disabled={!editor.isEditable}
-          >
-            <ImageIcon className="h-4 w-4" />
-          </Button>
         </div>
       </div>
       
       {/* Editor content */}
       <EditorContent editor={editor} className="min-h-[400px]" />
-
-      {/* Hidden file input for image upload */}
-      <Input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) {
-            handleImageUpload(file);
-          }
-        }}
-        className="hidden"
-      />
 
       {/* Link Dialog */}
       <Dialog open={linkDialogOpen} onOpenChange={setLinkDialogOpen}>
@@ -470,39 +399,6 @@ const ModernRichTextEditor = ({
               <Button onClick={handleLinkInsert}>
                 Ավելացնել
               </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Image Upload Dialog */}
-      <Dialog open={imageDialogOpen} onOpenChange={setImageDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Նկար ավելացնել</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
-              <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-              <p className="text-muted-foreground mb-4">
-                Ընտրեք նկար ձեր համակարգչից
-              </p>
-              <Button
-                variant="outline"
-                onClick={openFileDialog}
-                disabled={uploadingImage}
-              >
-                <Upload className="w-4 h-4 mr-2" />
-                {uploadingImage ? 'Բեռնավորում...' : 'Ընտրել նկար'}
-              </Button>
-              {uploadingImage && (
-                <div className="mt-4 text-sm text-muted-foreground">
-                  Նկարը բեռնավորվում է...
-                </div>
-              )}
-            </div>
-            <div className="text-xs text-muted-foreground text-center">
-              PNG, JPG, GIF մինչև 10MB
             </div>
           </div>
         </DialogContent>

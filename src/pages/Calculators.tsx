@@ -1,4 +1,4 @@
-import { ArrowRight, Calculator, TrendingUp, Shield, Users, Award, CheckCircle, BarChart3, FileText, GraduationCap, Zap, Target, Clock, Search, Filter, X, SortAsc, SortDesc } from 'lucide-react';
+import { ArrowRight, Calculator, Shield, Zap, Target, Search, Filter, X, SortAsc, SortDesc } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,13 +7,16 @@ import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
 import { useEffect, useState, useMemo } from 'react';
 import { laravelApi } from '@/integrations/laravel/client';
+import { useLanguage } from '@/contexts/LanguageContext';
 import DynamicIcon from '@/components/ui/DynamicIcon';
 import NetworkAnimation from '@/components/NetworkAnimation';
 
 const Calculators = () => {
+  const { t, currentLanguage } = useLanguage();
+
   useEffect(() => {
-    document.title = 'Հաշվիչներ — Ֆինանսական հաշվիչներ | Amroyan Consulting';
-    const desc = 'Ֆինանսական հաշվիչներ՝ Աշխատավարձ, Շրջհարկ, Շահութահարկ, Նպաստ, Նախագծերի (Սմետա) հաշվարկ';
+    document.title = t('calculators.metaTitle');
+    const desc = t('calculators.metaDescription');
     let meta = document.querySelector('meta[name="description"]');
     if (!meta) {
       meta = document.createElement('meta');
@@ -25,10 +28,10 @@ const Calculators = () => {
     if (!canonical) {
       canonical = document.createElement('link');
       canonical.setAttribute('rel', 'canonical');
-      document.head.appendChild(meta);
+      document.head.appendChild(canonical);
     }
     canonical.setAttribute('href', window.location.origin + '/calculators');
-  }, []);
+  }, [t, currentLanguage]);
 
   const [items, setItems] = useState<Array<{ title: string; to: string; icon_name: string; desc: string; category?: string; tags?: string[] }>>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -46,15 +49,16 @@ const Calculators = () => {
         console.log('API Response:', response);
         console.log('Calculators data:', data);
         
-        const apiItems = data.map((d: any) => ({
-          title: d.title,
-          to: `/calculators/${d.slug}`,
-          icon_name: d.icon_name || 'Calculator',
-          desc: d.description || '',
-          category: d.category || 'general',
-          tags: d.tags || []
-        }));
-        
+        const apiItems = data
+          .map((d: any) => ({
+            title: d.title,
+            to: `/calculators/${d.slug}`,
+            icon_name: d.icon_name || 'Calculator',
+            desc: d.description || '',
+            category: d.category || 'general',
+            tags: d.tags || []
+          }))
+          .filter((item: { to: string }) => item.to !== '/calculators/comprehensive-salary' && item.to !== '/calculators/armenian-payroll');
         console.log('Processed items:', apiItems);
         setItems(apiItems);
       } catch (error) {
@@ -65,23 +69,15 @@ const Calculators = () => {
             title: 'Աշխատավարձի հաշվիչ',
             to: '/calculators/salary',
             icon_name: 'Calculator',
-            desc: 'Հաշվեք գրանցված ↔ մաքուր աշխատավարձը՝ հաշվի առնելով եկամտային հարկը, կուտակային վճարներն ու դրոշմանիշային վճարը',
+            desc: 'Աշխատավարձի հաշվիչը հնարավորություն է տալիս պարզ և մատչելի կերպով հաշվարկել աշխատավարձի չափը, հարկերը և այլ վճարների չափերը։',
             category: 'salary',
             tags: ['աշխատավարձ', 'հարկ', 'կուտակային', 'դրոշմանիշ']
           },
           {
-            title: 'Աշխատավարձի հաշվիչ (լրիվ)',
-            to: '/calculators/comprehensive-salary',
-            icon_name: 'Calculator',
-            desc: 'Հաշվեք աշխատավարձի ֆոնդը, հարկերը, ծախսերը և վերջնական գինը՝ ժամավճարային, օրավճարային և ամսավճարային դրույքներով',
-            category: 'salary',
-            tags: ['աշխատավարձ', 'ֆոնդ', 'հարկ', 'ծախս', 'շահույթ']
-          },
-          {
-            title: 'Նախագծային հաշվիչ',
+            title: 'ՆԱԽԱԳԾԵՐԻ ՀԱՇՎԻՉ',
             to: '/calculators/estimate',
             icon_name: 'Calculator',
-            desc: 'Հաշվեք նախագծերի արժեքը և գնահատումները',
+            desc: 'Հաշվիչը հնարավորություն է տալիս հաշվարկել տարբեր ծառայությունների, աշխատանքների և պրոյեկտների բյուջեն՝ ինչպես պատվիրատուների, այնպես էլ կատարողների համար։',
             category: 'project',
             tags: ['նախագիծ', 'արժեք', 'գնահատում', 'սմետա']
           },
@@ -89,7 +85,7 @@ const Calculators = () => {
             title: 'Շրջանառության հարկի հաշվիչ',
             to: '/calculators/turnover-tax',
             icon_name: 'Calculator',
-            desc: 'Հաշվեք եռամսյակային շրջանառության հարկը՝ տարբեր գործունեության տեսակների համար՝ հանելով ծախսերը և ստուգելով նվազագույն հարկը',
+            desc: 'Շրջանառության հարկի հաշվիչը հնարավորություն է տալիս հաշվարկել կազմակերպության կամ ԱՁ-ի եռամսյակային շրջանառության հարկը՝ ըստ գործունեության տեսակի։',
             category: 'tax',
             tags: ['շրջանառություն', 'հարկ', 'եռամսյակ', 'գործունեություն']
           },
@@ -100,14 +96,6 @@ const Calculators = () => {
             desc: 'Հաշվեք շահութահարկը՝ եկամուտներ, ծախսեր, կորուստներ, նվազեցումներ և հարկվող շահույթ՝ 79 տողի ամբողջական հարկային աղյուսակով',
             category: 'tax',
             tags: ['շահութահարկ', 'հարկային', 'եկամուտ', 'ծախս', 'կորուստ']
-          },
-          {
-            title: 'Հայաստանի աշխատավարձի հաշվիչ',
-            to: '/calculators/armenian-payroll',
-            icon_name: 'Calculator',
-            desc: 'Հաշվեք կեղտոտ/մաքուր աշխատավարձը՝ եկամտահարկ, սոցիալական վճարներ և դրոշմանիշային վճար',
-            category: 'salary',
-            tags: ['աշխատավարձ', 'կեղտոտ', 'մաքուր', 'հարկ', 'սոցիալական']
           },
           {
             title: 'Նպաստի հաշվիչ',
@@ -123,43 +111,30 @@ const Calculators = () => {
     fetchCalculators();
   }, []);
 
-  const features = [
-    {
-      icon: Calculator,
-      title: "Պրոֆեսիոնալ հաշվարկներ",
-      description: "Մեր հաշվիչները հիմնված են ամենավերջին հարկային և ֆինանսական կարգավորումների վրա"
-    },
-    {
-      icon: Zap,
-      title: "Արագ և ճշգրիտ",
-      description: "Ստացեք ակնթարթային արդյունքներ ձեր ֆինանսական հաշվարկների համար"
-    },
-    {
-      icon: Shield,
-      title: "Վստահելի",
-      description: "Բոլոր հաշվարկները ստուգված են մասնագետների կողմից"
-    },
-    {
-      icon: Target,
-      title: "Կենտրոնացված",
-      description: "Մի տեղում բոլոր անհրաժեշտ ֆինանսական գործիքները"
-    }
-  ];
+  const featuresData = (() => {
+    const f = t('calculators.features') as unknown;
+    return Array.isArray(f) ? (f as { title: string; description: string }[]) : [];
+  })();
+  const featureIcons = [Calculator, Zap, Shield, Target];
+  const features = featuresData.map((item, i) => ({
+    icon: featureIcons[i] ?? Calculator,
+    title: item?.title ?? '',
+    description: item?.description ?? '',
+  }));
 
-  const stats = [
-    { number: '8+', label: 'հաշվիչներ' },
-    { number: '100%', label: 'ճշգրտություն' },
-    { number: '24/7', label: 'մատչելիություն' },
-    { number: '0', label: 'ծախս' }
-  ];
+  const statsData = (() => {
+    const s = t('calculators.stats') as unknown;
+    return Array.isArray(s) ? (s as { number: string; label: string }[]) : [];
+  })();
 
-  // Categories for filtering
+  // Categories for filtering (labels from translations)
+  const cat = (key: string) => t(`calculators.categories.${key}`);
   const categories = [
-    { value: 'all', label: 'Բոլորը', count: items.length },
-    { value: 'salary', label: 'Աշխատավարձ', count: items.filter(item => item.category === 'salary').length },
-    { value: 'tax', label: 'Հարկեր', count: items.filter(item => item.category === 'tax').length },
-    { value: 'project', label: 'Նախագծեր', count: items.filter(item => item.category === 'project').length },
-    { value: 'benefits', label: 'Նպաստներ', count: items.filter(item => item.category === 'benefits').length }
+    { value: 'all', label: cat('all'), count: items.length },
+    { value: 'salary', label: cat('salary'), count: items.filter(item => item.category === 'salary').length },
+    { value: 'tax', label: cat('tax'), count: items.filter(item => item.category === 'tax').length },
+    { value: 'project', label: cat('project'), count: items.filter(item => item.category === 'project').length },
+    { value: 'benefits', label: cat('benefits'), count: items.filter(item => item.category === 'benefits').length }
   ];
 
   // Filtered and sorted items
@@ -227,21 +202,21 @@ const Calculators = () => {
         <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="max-w-4xl mx-auto animate-fade-in-up">
             <h1 className="text-4xl sm:text-5xl md:text-6xl mb-4 sm:mb-6 leading-tight font-bold lg:text-5xl">
-              <span className="gradient-text py-0 px-0 mx-0 my-[8px] font-semibold leading-relaxed">Ֆինանսական հաշվիչներ</span>
+              <span className="gradient-text py-0 px-0 mx-0 my-[8px] font-semibold leading-relaxed">{t('calculators.heroTitle')}</span>
             </h1>
             <p className="text-lg text-gray-300 mb-6 sm:mb-8 my-0 py-[20px] sm:text-2xl">
-              Պրոֆեսիոնալ գործիքներ ձեր բիզնեսի ֆինանսական հաշվարկների համար
+              {t('calculators.heroSubtitle')}
             </p>
 
             {/* Stats */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8 max-w-4xl mx-auto px-4 mt-16">
-              {stats.map((stat, index) => (
+              {statsData.map((stat, index) => (
                 <div key={index} className="text-center">
                   <div className="text-2xl sm:text-3xl lg:text-4xl font-bold gradient-text mb-1 sm:mb-2">
-                    {stat.number}
+                    {stat?.number}
                   </div>
                   <div className="text-gray-400 text-xs sm:text-sm lg:text-base">
-                    {stat.label}
+                    {stat?.label}
                   </div>
                 </div>
               ))}
@@ -261,10 +236,10 @@ const Calculators = () => {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12 sm:mb-16">
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6">
-              <span className="gradient-text">Ինչու՞ մեր հաշվիչները</span>
+              <span className="gradient-text">{t('calculators.featuresTitle')}</span>
             </h2>
             <p className="text-lg sm:text-xl text-gray-300 max-w-2xl mx-auto px-4">
-              Մենք առաջարկում ենք ամենաարդյունավետ գործիքները ձեր ֆինանսական հաշվարկների համար
+              {t('calculators.featuresSubtitle')}
             </p>
           </div>
 
@@ -293,10 +268,10 @@ const Calculators = () => {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12 sm:mb-16">
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6">
-              <span className="gradient-text">Հասանելի հաշվիչներ</span>
+              <span className="gradient-text">{t('calculators.listTitle')}</span>
             </h2>
             <p className="text-lg sm:text-xl text-gray-300 max-w-2xl mx-auto px-4">
-              Ընտրեք ձեզ անհրաժեշտ հաշվիչը և սկսեք հաշվարկները
+              {t('calculators.listSubtitle')}
             </p>
           </div>
 
@@ -309,7 +284,7 @@ const Calculators = () => {
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                   <Input
                     type="text"
-                    placeholder="Փնտրել հաշվիչներ... (օր. աշխատավարձ, հարկ, նպաստ)"
+                    placeholder={t('calculators.searchPlaceholder')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10 pr-4 py-3 bg-gray-800 border-gray-600 text-white placeholder-gray-400 focus:border-gold-500 focus:ring-gold-500/20"
@@ -333,7 +308,7 @@ const Calculators = () => {
                     <div className="flex-1 min-w-0">
                       <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                         <SelectTrigger className="bg-gray-800 border-gray-600 text-white">
-                          <SelectValue placeholder="Ընտրել կատեգորիա" />
+                          <SelectValue placeholder={t('calculators.selectCategory')} />
                         </SelectTrigger>
                         <SelectContent className="bg-gray-800 border-gray-600">
                           {categories.map((category) => (
@@ -352,8 +327,8 @@ const Calculators = () => {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="bg-gray-800 border-gray-600">
-                          <SelectItem value="title" className="text-white hover:bg-gray-700">Անուն</SelectItem>
-                          <SelectItem value="category" className="text-white hover:bg-gray-700">Կատեգորիա</SelectItem>
+                          <SelectItem value="title" className="text-white hover:bg-gray-700">{t('calculators.sortByTitle')}</SelectItem>
+                          <SelectItem value="category" className="text-white hover:bg-gray-700">{t('calculators.sortByCategory')}</SelectItem>
                         </SelectContent>
                       </Select>
                       
@@ -377,7 +352,7 @@ const Calculators = () => {
                       className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
                     >
                       <Filter className="w-4 h-4 mr-2" />
-                      Ֆիլտրեր
+                      {t('calculators.filters')}
                     </Button>
                     
                     {hasActiveFilters && (
@@ -388,7 +363,7 @@ const Calculators = () => {
                         className="border-red-500 text-red-400 hover:bg-red-500 hover:text-white"
                       >
                         <X className="w-4 h-4 mr-2" />
-                        Մաքրել
+                        {t('calculators.clear')}
                       </Button>
                     )}
                   </div>
@@ -397,12 +372,12 @@ const Calculators = () => {
                 {/* Advanced Filters */}
                 {showFilters && (
                   <div className="mt-6 pt-6 border-t border-gray-700">
-                    <h4 className="text-lg font-semibold text-white mb-4">Ընդլայնված ֆիլտրեր</h4>
+                    <h4 className="text-lg font-semibold text-white mb-4">{t('calculators.advancedFilters')}</h4>
                     
                     {/* Tags Filter */}
                     <div className="mb-4">
                       <label className="block text-sm font-medium text-gray-300 mb-2">
-                        Հատկորոշիչներ (տեգեր)
+                        {t('calculators.tagsLabel')}
                       </label>
                       <div className="flex flex-wrap gap-2">
                         {allTags.map((tag) => (
@@ -424,7 +399,7 @@ const Calculators = () => {
 
                     {/* Results Count */}
                     <div className="text-sm text-gray-400">
-                      Գտնվել է {filteredItems.length} հաշվիչ {items.length}-ից
+                      {t('calculators.foundCount').replace('{count}', String(filteredItems.length)).replace('{total}', String(items.length))}
                     </div>
                   </div>
                 )}
@@ -435,7 +410,7 @@ const Calculators = () => {
                     <div className="flex flex-wrap gap-2">
                       {searchQuery && (
                         <Badge variant="secondary" className="bg-gold-500/20 text-gold-400 border-gold-500/30">
-                          Փնտրում: "{searchQuery}"
+                          {t('calculators.searchLabel')}: "{searchQuery}"
                           <Button
                             variant="ghost"
                             size="sm"
@@ -449,7 +424,7 @@ const Calculators = () => {
                       
                       {selectedCategory !== 'all' && (
                         <Badge variant="secondary" className="bg-blue-500/20 text-blue-400 border-blue-500/30">
-                          Կատեգորիա: {categories.find(c => c.value === selectedCategory)?.label}
+                          {t('calculators.categoryLabel')}: {categories.find(c => c.value === selectedCategory)?.label}
                           <Button
                             variant="ghost"
                             size="sm"
@@ -471,8 +446,8 @@ const Calculators = () => {
           <div className="mb-6 text-center">
             <p className="text-gray-400">
               {filteredItems.length === items.length 
-                ? `Ցուցադրվում են բոլոր ${items.length} հաշվիչները`
-                : `Ցուցադրվում է ${filteredItems.length} հաշվիչ ${items.length}-ից`
+                ? t('calculators.showingAll').replace('{count}', String(items.length))
+                : t('calculators.showingCount').replace('{count}', String(filteredItems.length)).replace('{total}', String(items.length))
               }
             </p>
           </div>
@@ -483,12 +458,12 @@ const Calculators = () => {
               <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gray-800 flex items-center justify-center">
                 <Search className="w-12 h-12 text-gray-400" />
               </div>
-              <h3 className="text-xl font-semibold text-white mb-2">Հաշվիչներ չեն գտնվել</h3>
+              <h3 className="text-xl font-semibold text-white mb-2">{t('calculators.noResultsTitle')}</h3>
               <p className="text-gray-400 mb-6">
-                Փորձեք փոխել ձեր որոնման պարամետրերը կամ մաքրել ֆիլտրերը
+                {t('calculators.noResultsDesc')}
               </p>
               <Button onClick={clearFilters} className="bg-gold-500 hover:bg-gold-600 text-black">
-                Մաքրել բոլոր ֆիլտրերը
+                {t('calculators.clearAllFilters')}
               </Button>
             </div>
           )}
@@ -542,7 +517,7 @@ const Calculators = () => {
                       ))}
                       {tags.length > 3 && (
                         <Badge variant="secondary" className="text-xs bg-gray-700 text-gray-300">
-                          +{tags.length - 3} այլ
+                          +{tags.length - 3} {t('calculators.moreTags')}
                         </Badge>
                       )}
                     </div>
@@ -550,8 +525,8 @@ const Calculators = () => {
                 </CardHeader>
                 <CardContent className="p-6 sm:p-8 pt-0">
                   <Button asChild className="bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-black font-semibold w-full h-12 text-base group-hover:shadow-lg group-hover:shadow-gold-500/25 transition-all duration-300">
-                    <Link to={to} aria-label={`${title} էջ`}>
-                      Բացել հաշվիչը <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform duration-300" size={18} />
+                    <Link to={to} aria-label={`${title}`}>
+                      {t('calculators.openCalculator')} <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform duration-300" size={18} />
                     </Link>
                   </Button>
                 </CardContent>
@@ -573,20 +548,20 @@ const Calculators = () => {
                     <Calculator className="text-black" size={40} />
                   </div>
                   <h3 className="text-2xl sm:text-3xl font-bold text-white mb-4">
-                    Ունեք հարցեր հաշվիչների մասին?
+                    {t('calculators.ctaTitle')}
                   </h3>
                   <p className="text-gray-300 mb-8 text-lg leading-relaxed">
-                    Մեր փորձագետները պատրաստ են օգնել ձեզ ընտրել ճիշտ հաշվիչը և բացատրել հաշվարկների մանրամասները
+                    {t('calculators.ctaDesc')}
                   </p>
                   <div className="flex flex-col sm:flex-row gap-4 justify-center">
                     <Button asChild size="lg" className="bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-black font-semibold px-8 py-4">
                       <Link to="/contact">
-                        Կապ մեզ հետ <ArrowRight className="ml-2" size={20} />
+                        {t('calculators.contactUs')} <ArrowRight className="ml-2" size={20} />
                       </Link>
                     </Button>
                     <Button asChild variant="outline" size="lg" className="border-gold-500 text-gold-400 hover:bg-gold-500 hover:text-black px-8 py-4">
                       <Link to="/services">
-                        Մեր ծառայությունները
+                        {t('calculators.ourServices')}
                       </Link>
                     </Button>
                   </div>

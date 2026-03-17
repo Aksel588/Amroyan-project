@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\CourseApplicationController;
 use App\Http\Controllers\Api\StatsController;
 use App\Http\Controllers\Api\ImageUploadController;
 use App\Http\Controllers\Api\DocumentUploadController;
+use App\Http\Controllers\Api\ArchiveController;
 use App\Http\Controllers\Api\SettingsController;
 use App\Http\Controllers\Api\NewsletterController;
 
@@ -65,6 +66,7 @@ Route::delete('/contact/{id}', [ContactController::class, 'destroy'])->middlewar
 
 // Document routes
 Route::get('/documents', [DocumentController::class, 'index']);
+Route::get('/documents/{id}/download', [DocumentController::class, 'download']);
 Route::get('/documents/{id}', [DocumentController::class, 'show']);
 Route::post('/documents', [DocumentController::class, 'store'])->middleware('auth:sanctum');
 Route::put('/documents/{id}', [DocumentController::class, 'update']); // Auth temporarily removed for testing
@@ -100,11 +102,16 @@ Route::get('/stats', [StatsController::class, 'index'])->middleware('auth:sanctu
 
 // Image upload routes
 Route::post('/upload-image', [ImageUploadController::class, 'store'])->middleware('auth:sanctum');
+Route::get('/blog-images/{filename}', [ImageUploadController::class, 'serveBlogImage'])->where('filename', '[^/]+');
 Route::post('/upload-document', [DocumentUploadController::class, 'store']);
+
+// Archive / warehouse documents PDF download (ensure route cache is cleared on deploy: php artisan route:clear)
+Route::get('/archive/warehouse-documents', [ArchiveController::class, 'warehousePdf']);
 
 // Settings routes
 Route::get('/settings', [SettingsController::class, 'index']);
 Route::put('/settings', [SettingsController::class, 'update'])->middleware('auth:sanctum');
+Route::put('/settings/main-admin', [SettingsController::class, 'setMainAdmin'])->middleware('auth:sanctum');
 Route::get('/settings/{key}', [SettingsController::class, 'show']);
 Route::post('/settings/initialize', [SettingsController::class, 'initializeDefaults'])->middleware('auth:sanctum');
 

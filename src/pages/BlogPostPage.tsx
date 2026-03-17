@@ -10,9 +10,29 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import NotFound from './NotFound';
 import { laravelApi } from "@/integrations/laravel/client";
 import { useEffect, useState } from "react";
+
+const LARAVEL_ORIGIN = (() => {
+  const url = import.meta.env.VITE_LARAVEL_API_URL || "https://amroyancons.am/api";
+  try {
+    return new URL(url).origin;
+  } catch {
+    return url.replace(/\/api\/?$/, "") || "http://127.0.0.1:8001";
+  }
+})();
+
+function absoluteImageUrl(url: string): string {
+  if (!url) return url;
+  // Fix wrong /api/storage/ URLs: use correct origin and /storage/ path
+  if (url.includes("/api/storage/")) {
+    const path = url.replace(/^https?:\/\/[^/]+\/api\/storage\//, "/storage/");
+    return LARAVEL_ORIGIN.replace(/\/$/, "") + path;
+  }
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  const base = LARAVEL_ORIGIN.replace(/\/$/, "");
+  return base + (url.startsWith("/") ? url : "/" + url);
+}
 
 interface BlogPost {
   id: string;
@@ -29,23 +49,36 @@ interface BlogPost {
   created_at: string;
 }
 
-// A component to render the HTML with inline styles to mimic prose
+// Prose styles for editor output: headings, lists, blockquote, code, alignment
+const ARTICLE_STYLES = `
+  .article-content h1 { font-size: 2.25rem; font-weight: bold; color: #fbbf24; margin-top: 2em; margin-bottom: 0.75em; }
+  .article-content h2 { font-size: 1.875rem; font-weight: bold; color: #fbbf24; margin-top: 2em; margin-bottom: 1em; }
+  .article-content h3 { font-size: 1.5rem; font-weight: bold; color: #fbbf24; margin-top: 1.6em; margin-bottom: 0.8em; }
+  .article-content p { margin-bottom: 1.25em; line-height: 1.75; }
+  .article-content ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 1.25em; line-height: 1.75; }
+  .article-content ol { list-style-type: decimal; padding-left: 1.5em; margin-bottom: 1.25em; line-height: 1.75; }
+  .article-content li { margin-bottom: 0.5em; }
+  .article-content blockquote { border-left: 4px solid #fbbf24; padding-left: 1em; margin: 1.5em 0; color: #d4d4d4; font-style: italic; }
+  .article-content pre { background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.3); border-radius: 0.5rem; padding: 1rem; overflow-x: auto; margin: 1.5em 0; }
+  .article-content code { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  .article-content pre code { background: none; padding: 0; }
+  .article-content a { color: #f59e0b; text-decoration: underline; }
+  .article-content img { width: 100%; height: auto; border-radius: 0.75rem; margin: 2em 0; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3); }
+`;
+
+// Renders blog body HTML with fixed image URLs and scoped prose styles
 const ArticleContent = ({ htmlContent }: { htmlContent: string }) => {
     const styledHtml = htmlContent
-        .replace(/<h2>/g, `<h2 style="font-size: 1.875rem; font-weight: bold; color: #fbbf24; margin-top: 2em; margin-bottom: 1em;">`)
-        .replace(/<h3>/g, `<h3 style="font-size: 1.5rem; font-weight: bold; color: #fbbf24; margin-top: 1.6em; margin-bottom: 0.8em;">`)
-        .replace(/<p>/g, `<p style="margin-bottom: 1.25em; line-height: 1.75;">`)
-        .replace(/<ul>/g, `<ul style="list-style-type: disc; padding-left: 1.5em; margin-bottom: 1.25em; line-height: 1.75;">`)
-        .replace(/<li>/g, `<li style="margin-bottom: 0.5em;">`)
-        .replace(/<a /g, `<a style="color: #f59e0b; text-decoration: underline;" `)
-        .replace(/<img/g, '<img style="width: 100%; height: auto; border-radius: 0.75rem; margin-top: 2em; margin-bottom: 2em; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);"')
-        .replace(/<iframe/g, '<iframe style="width: 100%; aspect-ratio: 16 / 9; border-radius: 0.5rem; margin-top: 2em; margin-bottom: 2em;"');
+        .replace(/<img([^>]*?)src=["']([^"']+)["']/gi, (_, attrs, src) => `<img${attrs}src="${absoluteImageUrl(src)}"`);
 
     return (
-      <div 
-        className="prose prose-lg prose-invert max-w-none"
-        dangerouslySetInnerHTML={{ __html: styledHtml }} 
-      />
+      <>
+        <style>{ARTICLE_STYLES}</style>
+        <div
+          className="article-content prose prose-lg prose-invert max-w-none"
+          dangerouslySetInnerHTML={{ __html: styledHtml }}
+        />
+      </>
     );
 };
 
@@ -94,7 +127,19 @@ const BlogPostPage = () => {
   }
 
   if (!post) {
-    return <NotFound />;
+    return (
+      <div className="min-h-screen pt-20 bg-black text-white flex flex-col items-center justify-center px-4">
+        <h1 className="text-2xl font-bold text-gold-400 mb-2">Գրառումը չի գտնվել</h1>
+        <p className="text-gray-400 mb-6">Ձեր հարցած հղումով գրառում չկա կամ այն հեռացվել է։</p>
+        <Link
+          to="/blog"
+          className="inline-flex items-center gap-2 rounded-lg bg-gold-500 px-4 py-2 text-black font-medium hover:bg-gold-600"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Վերադառնալ բլոգ
+        </Link>
+      </div>
+    );
   }
 
   return (
@@ -107,7 +152,7 @@ const BlogPostPage = () => {
             {post.featured_image && (
               <div className="mb-8">
                 <img 
-                  src={post.featured_image} 
+                  src={absoluteImageUrl(post.featured_image)} 
                   alt={post.title}
                   className="w-full max-w-3xl mx-auto h-64 md:h-80 object-cover rounded-lg shadow-2xl border border-gold-500/20"
                 />

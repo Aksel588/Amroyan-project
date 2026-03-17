@@ -2,173 +2,130 @@ import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Separator } from '@/components/ui/separator';
-import { Plus, Minus, Calculator, FileText } from 'lucide-react';
+import { Calculator, FileText } from 'lucide-react';
 
-interface Position {
-  id: string;
-  type: 'hourly' | 'daily' | 'monthly';
-  hourlyRate?: number;
-  hoursPerDay?: number;
-  daysPerMonth?: number;
-  dailyRate?: number;
-  monthlySalary?: number;
+const POSITIONS_COUNT = 6;
+const STAMP_DUTY_PER_POSITION = 3000;
+const INCOME_TAX_RATE = 0.2;
+const SOCIAL_RATE = 0.05;
+const TAX_BASE_DIVISOR = 0.75;
+const PROFIT_IN_SERVICE_MULTIPLIER = 0.82;
+const VAT_RATE = 0.2;
+
+interface ProjectCalculatorState {
+  // ժամավճար: 6 rows, each with ժամավճար, ժամեր օրվա մեջ, օրերի քանակ ամսվա մեջ
+  hourly: Array<{ rate: number; hoursPerDay: number; daysPerMonth: number }>;
+  // օրավճար: 6 rows, each with օրավճար, օրերի քանակ ամսվա մեջ
+  daily: Array<{ rate: number; daysPerMonth: number }>;
+  // ամսավճար/հաստիք: 6 values
+  monthly: number[];
+  // Այլ ծախսեր 1-5
+  otherExpenses: number[];
+  otherExpensesComment: string;
+  profitPercent: number;
+  vatPayer: boolean;
 }
 
-interface Expense {
-  id: string;
-  name: string;
-  value: number;
-}
-
-interface CalculationResults {
-  hourlySalariesTotal: number;
-  dailySalariesTotal: number;
-  monthlySalariesTotal: number;
-  totalSalaryFund: number;
-  totalPositions: number;
-
-  stampDuty: number;
-  taxBase: number;
-  incomeTax: number;
-  socialContribution: number;
-  totalSalaryWithTaxes: number;
-
-  totalOtherCosts: number;
-
-  profitValue: number;
-
-  serviceCostInclTaxes: number;
-  vat: number;
-  finalTotalValue: number;
-}
-
-const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
+const defaultHourly = () => Array.from({ length: POSITIONS_COUNT }, () => ({ rate: 0, hoursPerDay: 8, daysPerMonth: 22 }));
+const defaultDaily = () => Array.from({ length: POSITIONS_COUNT }, () => ({ rate: 0, daysPerMonth: 22 }));
+const defaultMonthly = () => Array(POSITIONS_COUNT).fill(0);
+const defaultOther = () => Array(5).fill(0);
 
 const ProjectCalculator = () => {
-  const [positions, setPositions] = useState<Position[]>([
-    { id: '1', type: 'monthly', monthlySalary: 300000 }
-  ]);
+  const [state, setState] = useState<ProjectCalculatorState>({
+    hourly: defaultHourly(),
+    daily: defaultDaily(),
+    monthly: defaultMonthly(),
+    otherExpenses: defaultOther(),
+    otherExpensesComment: '',
+    profitPercent: 13,
+    vatPayer: false
+  });
 
-  const [expenses, setExpenses] = useState<Expense[]>([
-    { id: '1', name: '', value: 0 }
-  ]);
-
-  const [profitMargin, setProfitMargin] = useState<number>(13);
-  const [vatPayer, setVatPayer] = useState<boolean>(false);
-
-  const addPosition = (type: 'hourly' | 'daily' | 'monthly') => {
-    if (positions.length >= 6) return;
-
-    const newPosition: Position = {
-      id: Date.now().toString(),
-      type,
-      ...(type === 'hourly' && { hourlyRate: 0, hoursPerDay: 8, daysPerMonth: 22 }),
-      ...(type === 'daily' && { dailyRate: 0, daysPerMonth: 22 }),
-      ...(type === 'monthly' && { monthlySalary: 0 })
-    };
-
-    setPositions([...positions, newPosition]);
+  const updateHourly = (index: number, field: 'rate' | 'hoursPerDay' | 'daysPerMonth', value: number) => {
+    setState(s => ({
+      ...s,
+      hourly: s.hourly.map((row, i) => (i === index ? { ...row, [field]: value } : row))
+    }));
+  };
+  const updateDaily = (index: number, field: 'rate' | 'daysPerMonth', value: number) => {
+    setState(s => ({
+      ...s,
+      daily: s.daily.map((row, i) => (i === index ? { ...row, [field]: value } : row))
+    }));
+  };
+  const updateMonthly = (index: number, value: number) => {
+    setState(s => ({
+      ...s,
+      monthly: s.monthly.map((v, i) => (i === index ? value : v))
+    }));
+  };
+  const updateOtherExpense = (index: number, value: number) => {
+    setState(s => ({
+      ...s,
+      otherExpenses: s.otherExpenses.map((v, i) => (i === index ? value : v))
+    }));
   };
 
-  const removePosition = (id: string) => {
-    if (positions.length <= 1) return;
-    setPositions(positions.filter(p => p.id !== id));
-  };
+  const calculations = useMemo(() => {
+    const hourlyValues = state.hourly.map(
+      row => (row.rate && row.hoursPerDay && row.daysPerMonth ? row.rate * row.hoursPerDay * row.daysPerMonth : 0)
+    );
+    const dailyValues = state.daily.map(row => (row.rate && row.daysPerMonth ? row.rate * row.daysPerMonth : 0));
+    const monthlyValues = state.monthly.map(v => v || 0);
 
-  const updatePosition = (id: string, field: keyof Position, value: any) => {
-    setPositions(positions.map(p => (p.id === id ? { ...p, [field]: value } : p)));
-  };
+    const hourlyCount = hourlyValues.filter(v => v > 0).length;
+    const dailyCount = dailyValues.filter(v => v > 0).length;
+    const monthlyCount = monthlyValues.filter(v => v > 0).length;
 
-  const addExpense = () => {
-    if (expenses.length >= 5) return;
-    setExpenses([...expenses, { id: Date.now().toString(), name: '', value: 0 }]);
-  };
+    const hourlySum = hourlyValues.reduce((a, b) => a + b, 0);
+    const dailySum = dailyValues.reduce((a, b) => a + b, 0);
+    const monthlySum = monthlyValues.reduce((a, b) => a + b, 0);
 
-  const removeExpense = (id: string) => {
-    if (expenses.length <= 1) return;
-    setExpenses(expenses.filter(e => e.id !== id));
-  };
+    const totalPositionsCount = hourlyCount + dailyCount + monthlyCount;
+    const totalSalaryFundNet = hourlySum + dailySum + monthlySum;
 
-  const updateExpense = (id: string, field: keyof Expense, value: any) => {
-    setExpenses(expenses.map(e => (e.id === id ? { ...e, [field]: value } : e)));
-  };
+    const stampDuty = totalPositionsCount * STAMP_DUTY_PER_POSITION;
+    const taxBase = (totalSalaryFundNet + stampDuty) / TAX_BASE_DIVISOR;
+    const incomeTax = taxBase * INCOME_TAX_RATE;
+    const socialContribution = taxBase * SOCIAL_RATE;
+    const totalSalaryWithTaxes = totalSalaryFundNet + incomeTax + socialContribution + stampDuty;
 
-  const calculations = useMemo((): CalculationResults => {
-    let hourlySalariesTotal = 0;
-    let dailySalariesTotal = 0;
-    let monthlySalariesTotal = 0;
-    let totalPositions = 0;
-
-    positions.forEach(position => {
-      if (position.type === 'hourly' && position.hourlyRate && position.hoursPerDay && position.daysPerMonth) {
-        const salary = position.hourlyRate * position.hoursPerDay * position.daysPerMonth;
-        hourlySalariesTotal += salary;
-        totalPositions++;
-      } else if (position.type === 'daily' && position.dailyRate && position.daysPerMonth) {
-        const salary = position.dailyRate * position.daysPerMonth;
-        dailySalariesTotal += salary;
-        totalPositions++;
-      } else if (position.type === 'monthly' && position.monthlySalary) {
-        monthlySalariesTotal += position.monthlySalary;
-        totalPositions++;
-      }
-    });
-
-    const totalSalaryFund = hourlySalariesTotal + dailySalariesTotal + monthlySalariesTotal;
-
-    // Taxes
-    const stampDuty = totalPositions * 3000;
-    const taxBase = (totalSalaryFund + stampDuty) / 0.75;
-    const incomeTax = taxBase * 0.2;
-    const socialContribution = taxBase * 0.05;
-    const totalSalaryWithTaxes = totalSalaryFund + stampDuty + incomeTax + socialContribution;
-
-    // Other costs
-    const totalOtherCosts = expenses.reduce((sum, expense) => sum + (expense.value || 0), 0);
-
-    // Base cost
-    const baseCost = totalSalaryWithTaxes + totalOtherCosts;
-
-    // Profit: margin-based
-    // If margin = 13%, baseCost is 87% of final ⇒ final = baseCost / 0.87
-    const safeMargin = clamp(profitMargin || 0, 0, 99.99);
-    const keepRate = 1 - safeMargin / 100; // e.g., 0.87
-    const serviceCostInclTaxes = keepRate > 0 ? baseCost / keepRate : 0;
-
-    // Profit value (difference)
-    const profitValue = serviceCostInclTaxes - baseCost;
-
-    const vat = vatPayer ? serviceCostInclTaxes * 0.2 : 0;
-    const finalTotalValue = serviceCostInclTaxes + vat;
+    const totalOther = state.otherExpenses.reduce((a, b) => a + (b || 0), 0);
+    const baseCost = totalSalaryWithTaxes + totalOther;
+    const profitValue = baseCost * (state.profitPercent / 100);
+    const serviceCostInclTaxes = baseCost + profitValue * PROFIT_IN_SERVICE_MULTIPLIER;
+    const vat = state.vatPayer ? serviceCostInclTaxes * VAT_RATE : 0;
+    const finalTotal = serviceCostInclTaxes + vat;
 
     return {
-      hourlySalariesTotal,
-      dailySalariesTotal,
-      monthlySalariesTotal,
-      totalSalaryFund,
-      totalPositions,
+      hourlyValues,
+      dailyValues,
+      monthlyValues,
+      hourlyCount,
+      dailyCount,
+      monthlyCount,
+      hourlySum,
+      dailySum,
+      monthlySum,
+      totalPositionsCount,
+      totalSalaryFundNet,
       stampDuty,
       taxBase,
       incomeTax,
       socialContribution,
       totalSalaryWithTaxes,
-      totalOtherCosts,
+      totalOther,
       profitValue,
       serviceCostInclTaxes,
       vat,
-      finalTotalValue
+      finalTotal
     };
-  }, [positions, expenses, profitMargin, vatPayer]);
+  }, [state]);
 
-  const formatAMD = (amount: number) =>
-    new Intl.NumberFormat('hy-AM', {
-      style: 'currency',
-      currency: 'AMD',
-      minimumFractionDigits: 0
-    }).format(amount || 0);
+  const formatAMD = (n: number) =>
+    new Intl.NumberFormat('hy-AM', { style: 'currency', currency: 'AMD', minimumFractionDigits: 0 }).format(n || 0);
 
   return (
     <div className="w-full max-w-6xl mx-auto space-y-6">
@@ -176,354 +133,238 @@ const ProjectCalculator = () => {
         <CardHeader>
           <CardTitle className="gradient-text text-2xl flex items-center gap-2">
             <FileText className="w-6 h-6" />
-            Նախագծային հաշվիչ
+            ՆԱԽԱԳԾԵՐԻ ՀԱՇՎԻՉ
           </CardTitle>
-          <CardDescription className="text-gray-400">
-            Հաշվիչը հնարավորություն է տալիս հաշվարկել տարբեր ծառայությունների, աշխատանքների է պրոյեկտների բյուջեն, է օգտակար կլինի ինչպես պատվիրատուների, այնպես էլ կատարողների համար: Նախագծի արժեքը հաշվարկելու համար լրացրեք աշխատավարձային մասը (հաստիքների զուտ արժեքները), այլ ծախսային հոդվածները, նշեք կազմակերպության շահույթը (mapma)  Կատարողի ԱԱՀ վճարող լինելը կամ ոչ:
+          <CardDescription className="text-gray-400 bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 text-sm">
+            Հաշվիչը հնարավորություն է տալիս հաշվարկել տարբեր ծառայությունների, աշխատանքների և պրոյեկտների բյուջեն, և օգտակար կլինի ինչպես պատվիրատուների, այնպես էլ կատարողների համար: Նախագծի արժեքը հաշվարկելու համար լրացրեք աշխատավարձային մասը (հաստիքների զուտ արժեքները), այլ ծախսային հոդվածները, նշեք կազմակերպության շահույթը (մարժա) և Կատարողի ԱԱՀ վճարող լինելը կամ ոչ:
           </CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-8">
-          {/* Salary Positions Section */}
+          {/* Աշխատավարձային մաս */}
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-white">Աշխատավարձի դիրքեր</h3>
-              <div className="flex gap-2">
-                <Button type="button" variant="outline" size="sm" onClick={() => addPosition('hourly')} disabled={positions.length >= 6} className="text-xs">
-                  <Plus className="w-3 h-3 mr-1" />
-                  Ժամավճար
-                </Button>
-                <Button type="button" variant="outline" size="sm" onClick={() => addPosition('daily')} disabled={positions.length >= 6} className="text-xs">
-                  <Plus className="w-3 h-3 mr-1" />
-                  Օրավճար
-                </Button>
-                <Button type="button" variant="outline" size="sm" onClick={() => addPosition('monthly')} disabled={positions.length >= 6} className="text-xs">
-                  <Plus className="w-3 h-3 mr-1" />
-                  Ամսավճար
-                </Button>
+            <h3 className="text-lg font-semibold text-white">Աշխատավարձային մաս</h3>
+
+            {/* 3 columns: ժամավճար (rows 1-6), օրավճար (rows 1-6), ամսավճար/հաստիք (rows 1-6). Only blue fields are editable. */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* ժամավճար — տողեր 1-6: ժամավճար, ժամեր օրվա մեջ, օրերի քանակ ամսվա մեջ */}
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium text-gold-400">ԺԱՄԱՎՃԱՐ ԱՌՁԵՌՆ</h4>
+                <div className="grid grid-cols-3 gap-1 text-xs text-gray-400 mb-2">
+                  <span>ժամավճար</span>
+                  <span>ժամեր օրվա մեջ</span>
+                  <span>օրերի քանակ ամսվա մեջ</span>
+                </div>
+                {state.hourly.map((row, i) => (
+                  <div key={i} className="grid grid-cols-3 gap-2">
+                    <Input
+                      type="number"
+                      value={row.rate || ''}
+                      onChange={e => updateHourly(i, 'rate', Number(e.target.value) || 0)}
+                      placeholder="0"
+                      className="bg-blue-500/20 border-blue-500/50 text-white text-sm"
+                    />
+                    <Input
+                      type="number"
+                      value={row.hoursPerDay || ''}
+                      onChange={e => updateHourly(i, 'hoursPerDay', Number(e.target.value) || 0)}
+                      placeholder="8"
+                      className="bg-blue-500/20 border-blue-500/50 text-white text-sm"
+                    />
+                    <Input
+                      type="number"
+                      value={row.daysPerMonth || ''}
+                      onChange={e => updateHourly(i, 'daysPerMonth', Number(e.target.value) || 0)}
+                      placeholder="22"
+                      className="bg-blue-500/20 border-blue-500/50 text-white text-sm"
+                    />
+                  </div>
+                ))}
+                <p className="text-xs text-gray-500 mt-2">Ներգև — յուրաքանչյուր հաստիքի արժեքը (ժամավճար × ժամ/օր × օր/ամիս)</p>
+                <div className="mt-2 space-y-1">
+                  {calculations.hourlyValues.map((v, i) => (
+                    <div key={i} className="flex justify-between text-sm">
+                      <span className="text-gray-500">հաստիք {i + 1}</span>
+                      <span className="text-white font-mono">{formatAMD(v)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* օրավճար — տողեր 1-6: օրավճար, օրերի քանակ ամսվա մեջ */}
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium text-gold-400">ՕՐԱՎՃԱՐ ԱՌՁԵՌՆ</h4>
+                <div className="grid grid-cols-2 gap-1 text-xs text-gray-400 mb-2">
+                  <span>օրավճար</span>
+                  <span>օրերի քանակ ամսվա մեջ</span>
+                </div>
+                {state.daily.map((row, i) => (
+                  <div key={i} className="grid grid-cols-2 gap-2">
+                    <Input
+                      type="number"
+                      value={row.rate || ''}
+                      onChange={e => updateDaily(i, 'rate', Number(e.target.value) || 0)}
+                      placeholder="0"
+                      className="bg-blue-500/20 border-blue-500/50 text-white text-sm"
+                    />
+                    <Input
+                      type="number"
+                      value={row.daysPerMonth || ''}
+                      onChange={e => updateDaily(i, 'daysPerMonth', Number(e.target.value) || 0)}
+                      placeholder="22"
+                      className="bg-blue-500/20 border-blue-500/50 text-white text-sm"
+                    />
+                  </div>
+                ))}
+                <p className="text-xs text-gray-500 mt-2">Ներգև — յուրաքանչյուր հաստիքի արժեքը (օրավճար × օր/ամիս)</p>
+                <div className="mt-2 space-y-1">
+                  {calculations.dailyValues.map((v, i) => (
+                    <div key={i} className="flex justify-between text-sm">
+                      <span className="text-gray-500">հաստիք {i + 1}</span>
+                      <span className="text-white font-mono">{formatAMD(v)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* ամսավճար/հաստիք — տողեր 1-6: ամսական հաստիք (միայն 1 դաշտ) */}
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium text-gold-400">ՀԱՍՏԻՔ (ԱՄՍԱՎՃԱՐ) ԱՌՁԵՌՆ</h4>
+                <div className="text-xs text-gray-400 mb-2">ամսավճար / հաստիք</div>
+                {[0, 1, 2, 3, 4, 5].map(i => (
+                  <div key={i}>
+                    <Label className="text-gray-500 text-xs">հաստիք {i + 1}</Label>
+                    <Input
+                      type="number"
+                      value={state.monthly[i] || ''}
+                      onChange={e => updateMonthly(i, Number(e.target.value) || 0)}
+                      className="bg-blue-500/20 border-blue-500/50 text-white text-sm mt-0.5"
+                      placeholder="0"
+                    />
+                  </div>
+                ))}
+                <p className="text-xs text-gray-500 mt-2">Ներգև — արտացոլվում է վերևի տողի հաստիք արժեքը</p>
+                <div className="mt-2 space-y-1">
+                  {calculations.monthlyValues.map((v, i) => (
+                    <div key={i} className="flex justify-between text-sm">
+                      <span className="text-gray-500">հաստիք {i + 1}</span>
+                      <span className="text-white font-mono">{formatAMD(v)}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
-            <div className="grid gap-4">
-              {positions.map((position) => (
-                <Card key={position.id} className="bg-gray-800 border-gray-700">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-4">
-                      <h4 className="font-medium text-white">
-                        {position.type === 'hourly' && 'Ժամավճարային դիրք'}
-                        {position.type === 'daily' && 'Օրավճարային դիրք'}
-                        {position.type === 'monthly' && 'Ամսավճարային դիրք'}
-                      </h4>
-                      {positions.length > 1 && (
-                        <Button type="button" variant="ghost" size="sm" onClick={() => removePosition(position.id)} className="text-red-400 hover:text-red-300">
-                          <Minus className="w-4 h-4" />
-                        </Button>
-                      )}
-                    </div>
+            {/* Հաստիքների քանակ, արժեքներ, Ընդամենը */}
+            <div className="bg-gray-800/50 rounded-lg p-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div>
+                <p className="text-gray-400">հաստիքներ քանակ</p>
+                <p className="text-white font-mono">{calculations.hourlyCount} / {calculations.dailyCount} / {calculations.monthlyCount}</p>
+              </div>
+              <div>
+                <p className="text-gray-400">հաստիքների արժեքներ</p>
+                <p className="text-white font-mono">{formatAMD(calculations.hourlySum)} / {formatAMD(calculations.dailySum)} / {formatAMD(calculations.monthlySum)}</p>
+              </div>
+              <div>
+                <p className="text-gray-400">Ընդամենը հաստիքների քանակ</p>
+                <p className="text-white font-semibold">{calculations.totalPositionsCount}</p>
+              </div>
+              <div>
+                <p className="text-gray-400">Ընդամենը աշխատավարձային ֆոնդ առձեռն</p>
+                <p className="text-white font-semibold">{formatAMD(calculations.totalSalaryFundNet)}</p>
+              </div>
+            </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {position.type === 'hourly' && (
-                        <>
-                          <div>
-                            <Label className="text-gold-400">Ժամավճար (AMD)</Label>
-                            <Input
-                              type="number"
-                              value={position.hourlyRate ?? ''}
-                              onChange={(e) => updatePosition(position.id, 'hourlyRate', Number(e.target.value))}
-                              placeholder="0"
-                              className="bg-gray-700 border-gray-600 text-white"
-                            />
-                          </div>
-                          <div>
-                            <Label className="text-gold-400">ժամ/օր</Label>
-                            <Input
-                              type="number"
-                              value={position.hoursPerDay ?? ''}
-                              onChange={(e) => updatePosition(position.id, 'hoursPerDay', Number(e.target.value))}
-                              placeholder="8"
-                              className="bg-gray-700 border-gray-600 text-white"
-                            />
-                          </div>
-                          <div>
-                            <Label className="text-gold-400">օր/ամիս</Label>
-                            <Input
-                              type="number"
-                              value={position.daysPerMonth ?? ''}
-                              onChange={(e) => updatePosition(position.id, 'daysPerMonth', Number(e.target.value))}
-                              placeholder="22"
-                              className="bg-gray-700 border-gray-600 text-white"
-                            />
-                          </div>
-                        </>
-                      )}
-
-                      {position.type === 'daily' && (
-                        <>
-                          <div>
-                            <Label className="text-gold-400">Օրավճար (AMD)</Label>
-                            <Input
-                              type="number"
-                              value={position.dailyRate ?? ''}
-                              onChange={(e) => updatePosition(position.id, 'dailyRate', Number(e.target.value))}
-                              placeholder="0"
-                              className="bg-gray-700 border-gray-600 text-white"
-                            />
-                          </div>
-                          <div>
-                            <Label className="text-gold-400">օր/ամիս</Label>
-                            <Input
-                              type="number"
-                              value={position.daysPerMonth ?? ''}
-                              onChange={(e) => updatePosition(position.id, 'daysPerMonth', Number(e.target.value))}
-                              placeholder="22"
-                              className="bg-gray-700 border-gray-600 text-white"
-                            />
-                          </div>
-                        </>
-                      )}
-
-                      {position.type === 'monthly' && (
-                        <div>
-                          <Label className="text-gold-400">Ամսական աշխատավարձ (AMD)</Label>
-                          <Input
-                            type="number"
-                            value={position.monthlySalary ?? ''}
-                            onChange={(e) => updatePosition(position.id, 'monthlySalary', Number(e.target.value))}
-                            placeholder="0"
-                            className="bg-gray-700 border-gray-600 text-white"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+            {/* Եկամտային հարկ, Սոցիալական վճար, Դրոշմանիշային վճար, Ընդամենը աշխատավարձ հարկերով */}
+            <div className="bg-gray-800/50 rounded-lg p-4 grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+              <div>
+                <p className="text-gray-400">Եկամտային հարկ</p>
+                <p className="text-red-400 font-mono">{formatAMD(calculations.incomeTax)}</p>
+              </div>
+              <div>
+                <p className="text-gray-400">Սոցիալական վճար</p>
+                <p className="text-red-400 font-mono">{formatAMD(calculations.socialContribution)}</p>
+              </div>
+              <div>
+                <p className="text-gray-400">Դրոշմանիշային վճար</p>
+                <p className="text-red-400 font-mono">{formatAMD(calculations.stampDuty)} ({calculations.totalPositionsCount} × 3000)</p>
+              </div>
+              <div>
+                <p className="text-gray-400">Ընդամենը աշխատավարձ հարկերով</p>
+                <p className="text-white font-semibold">{formatAMD(calculations.totalSalaryWithTaxes)}</p>
+              </div>
             </div>
           </div>
 
-          <Separator className="bg-gray-700" />
-
-          {/* Other Expenses Section */}
+          {/* Այլ ծախսեր */}
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-white">Այլ ծախսեր</h3>
-              <Button type="button" variant="outline" size="sm" onClick={addExpense} disabled={expenses.length >= 5} className="text-xs">
-                <Plus className="w-3 h-3 mr-1" />
-                Ավելացնել ծախս
-              </Button>
-            </div>
-
-            <div className="grid gap-4">
-              {expenses.map((expense, index) => (
-                <Card key={expense.id} className="bg-gray-800 border-gray-700">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-4">
-                      <h4 className="font-medium text-white">Ծախս #{index + 1}</h4>
-                      {expenses.length > 1 && (
-                        <Button type="button" variant="ghost" size="sm" onClick={() => removeExpense(expense.id)} className="text-red-400 hover:text-red-300">
-                          <Minus className="w-4 h-4" />
-                        </Button>
-                      )}
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label className="text-gold-400">Ծախսի անվանում</Label>
-                        <Input
-                          type="text"
-                          value={expense.name}
-                          onChange={(e) => updateExpense(expense.id, 'name', e.target.value)}
-                          placeholder="Օրինակ՝ վարձակալություն"
-                          className="bg-gray-700 border-gray-600 text-white"
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-gold-400">Գումար (AMD)</Label>
-                        <Input
-                          type="number"
-                          value={expense.value ?? ''}
-                          onChange={(e) => updateExpense(expense.id, 'value', Number(e.target.value))}
-                          placeholder="0"
-                          className="bg-gray-700 border-gray-600 text-white"
-                        />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+            <h3 className="text-lg font-semibold text-white">Այլ ծախսեր</h3>
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              {state.otherExpenses.map((val, i) => (
+                <div key={i}>
+                  <Label className="text-gold-400">Այլ ծախսեր {i + 1} *</Label>
+                  <Input
+                    type="number"
+                    value={val || ''}
+                    onChange={e => updateOtherExpense(i, Number(e.target.value) || 0)}
+                    className="bg-blue-500/20 border-blue-500/50 text-white mt-1"
+                    placeholder="0"
+                  />
+                </div>
               ))}
             </div>
-          </div>
-
-          <Separator className="bg-gray-700" />
-
-          {/* Settings Section */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <Label className="text-gold-400">Շահույթի մարժա (%)</Label>
+              <Label className="text-gray-400">Ծախսեր, բացատրություն</Label>
               <Input
-                type="number"
-                value={profitMargin}
-                onChange={(e) => setProfitMargin(Number(e.target.value))}
-                placeholder="13"
-                className="bg-gray-700 border-gray-600 text-white mt-2"
+                type="text"
+                value={state.otherExpensesComment}
+                onChange={e => setState(s => ({ ...s, otherExpensesComment: e.target.value }))}
+                className="bg-gray-800 border-gray-600 text-white mt-1"
+                placeholder="Մեկնաբանություն (ըստ ցանկության)"
               />
             </div>
-
-            <div className="flex items-center space-x-3">
-              <Switch checked={vatPayer} onCheckedChange={setVatPayer} />
-              <div>
-                <Label className="text-gold-400">ԱԱՀ վճարող</Label>
-                <p className="text-xs text-gray-400">Ստուգեք, եթե դուք ԱԱՀ վճարող եք</p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Results Section */}
-      <Card className="bg-gradient-to-b from-gray-900 to-black border-gold-500/20">
-        <CardHeader>
-          <CardTitle className="gradient-text text-xl flex items-center gap-2">
-            <Calculator className="w-5 h-5" />
-            Հաշվարկի արդյունքներ
-          </CardTitle>
-        </CardHeader>
-
-        <CardContent>
-          {/* Salary Fund Breakdown */}
-          <div className="mb-6">
-            <h4 className="text-lg font-semibold text-white mb-4">Աշխատավարձի ֆոնդ</h4>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-gray-800 p-4 rounded-lg">
-                <h5 className="text-sm text-gray-400 mb-2">Ժամավճարային (AMD)</h5>
-                <p className="text-xl font-bold text-blue-400">{formatAMD(calculations.hourlySalariesTotal)}</p>
-              </div>
-              <div className="bg-gray-800 p-4 rounded-lg">
-                <h5 className="text-sm text-gray-400 mb-2">Օրավճարային (AMD)</h5>
-                <p className="text-xl font-bold text-green-400">{formatAMD(calculations.dailySalariesTotal)}</p>
-              </div>
-              <div className="bg-gray-800 p-4 rounded-lg">
-                <h5 className="text-sm text-gray-400 mb-2">Ամսավճարային (AMD)</h5>
-                <p className="text-xl font-bold text-purple-400">{formatAMD(calculations.monthlySalariesTotal)}</p>
-              </div>
-            </div>
-
-            <div className="mt-4 bg-gray-800 p-4 rounded-lg">
-              <h5 className="text-sm text-gray-400 mb-2">Ընդամենը աշխատավարձի ֆոնդ (AMD)</h5>
-              <p className="text-2xl font-bold text-white">{formatAMD(calculations.totalSalaryFund)}</p>
-              <p className="text-xs text-gray-500 mt-1">{calculations.totalPositions} դիրք</p>
-            </div>
           </div>
 
-          {/* Taxes & Contributions */}
-          <div className="mb-6">
-            <h4 className="text-lg font-semibold text-white mb-4">Հարկեր և վճարներ</h4>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-gray-800 p-4 rounded-lg">
-                <h5 className="text-sm text-gray-400 mb-2">Դրոշմանիշային վճար</h5>
-                <p className="text-xl font-bold text-red-400">{formatAMD(calculations.stampDuty)}</p>
-                <p className="text-xs text-gray-500 mt-1">{calculations.totalPositions} × 3000</p>
-              </div>
-              <div className="bg-gray-800 p-4 rounded-lg">
-                <h5 className="text-sm text-gray-400 mb-2">Հարկային բազա</h5>
-                <p className="text-xl font-bold text-orange-400">{formatAMD(calculations.taxBase)}</p>
-              </div>
-              <div className="bg-gray-800 p-4 rounded-lg">
-                <h5 className="text-sm text-gray-400 mb-2">Եկամտային հարկ (20%)</h5>
-                <p className="text-xl font-bold text-red-400">{formatAMD(calculations.incomeTax)}</p>
-              </div>
-              <div className="bg-gray-800 p-4 rounded-lg">
-                <h5 className="text-sm text-gray-400 mb-2">Կենսաթոշակային վճար (5%)</h5>
-                <p className="text-xl font-bold text-red-400">{formatAMD(calculations.socialContribution)}</p>
-              </div>
-            </div>
-
-            <div className="mt-4 bg-gray-800 p-4 rounded-lg">
-              <h5 className="text-sm text-gray-400 mb-2">Աշխատավարձ հարկերով (AMD)</h5>
-              <p className="text-2xl font-bold text-orange-400">{formatAMD(calculations.totalSalaryWithTaxes)}</p>
-            </div>
-          </div>
-
-          {/* Other Costs */}
-          <div className="mb-6">
-            <h4 className="text-lg font-semibold text-white mb-4">Այլ ծախսեր</h4>
-            <div className="bg-gray-800 p-4 rounded-lg">
-              <h5 className="text-sm text-gray-400 mb-2">Ընդամենը այլ ծախսեր (AMD)</h5>
-              <p className="text-2xl font-bold text-yellow-400">{formatAMD(calculations.totalOtherCosts)}</p>
-            </div>
-          </div>
-
-          {/* Profit */}
-          <div className="mb-6">
-            <h4 className="text-lg font-semibold text-white mb-4">Շահույթ</h4>
-            <div className="bg-gray-800 p-4 rounded-lg">
-              <h5 className="text-sm text-gray-400 mb-2">Շահույթ ({profitMargin}%)</h5>
-              <p className="text-2xl font-bold text-green-400">{formatAMD(calculations.profitValue)}</p>
-            </div>
-          </div>
-
-          {/* Final Calculations */}
-          <div className="mb-6">
-            <h4 className="text-lg font-semibold text-white mb-4">Վերջնական հաշվարկ</h4>
+          {/* Կազմակերպության շահույթ, Ընդհանուր ծառայության արժեքը, ԱԱՀ, Ընդամենը արժեք */}
+          <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-gray-800 p-4 rounded-lg">
-                <h5 className="text-sm text-gray-400 mb-2">Ծառայության արժեք (շահույթի մարժայով)</h5>
-                <p className="text-xl font-bold text-blue-400">{formatAMD(calculations.serviceCostInclTaxes)}</p>
+              <div>
+                <Label className="text-gold-400">Կազմակերպության շահույթ, տոկոս</Label>
+                <Input
+                  type="number"
+                  value={state.profitPercent ?? ''}
+                  onChange={e => setState(s => ({ ...s, profitPercent: Number(e.target.value) || 0 }))}
+                  className="bg-blue-500/20 border-blue-500/50 text-white mt-1"
+                  placeholder="13"
+                />
               </div>
-              {vatPayer && (
-                <div className="bg-gray-800 p-4 rounded-lg">
-                  <h5 className="text-sm text-gray-400 mb-2">ԱԱՀ (20%)</h5>
-                  <p className="text-xl font-bold text-purple-400">{formatAMD(calculations.vat)}</p>
-                </div>
-              )}
+              <div>
+                <p className="text-gray-400">Կազմակերպության շահույթ, դրամով</p>
+                <p className="text-green-400 font-semibold text-lg mt-1">{formatAMD(calculations.profitValue)}</p>
+              </div>
             </div>
-          </div>
 
-          {/* Final Total */}
-          <div className="bg-gradient-to-r from-gold-500/20 to-gold-600/20 border border-gold-500/50 p-6 rounded-lg text-center">
-            <h4 className="text-lg font-semibold text-gold-400 mb-2">Վերջնական գումար</h4>
-            <p className="text-4xl font-bold text-gold-400">{formatAMD(calculations.finalTotalValue)}</p>
-            <p className="text-sm text-gray-400 mt-2">Ընդամենը նախագծի արժեքը</p>
-          </div>
+            <div className="bg-gray-800/50 rounded-lg p-4">
+              <p className="text-gray-400 text-sm">Ընդհանուր ծառայության արժեքը, ներառյալ հարկեր</p>
+              <p className="text-xl font-bold text-white mt-1">{formatAMD(calculations.serviceCostInclTaxes)}</p>
+              <p className="text-xs text-gray-500 mt-1">(Ընդ. աշխատավարձ հարկերով + այլ ծախսեր 1–5 + շահույթ դրամով × 0.82)</p>
+            </div>
 
-          {/* Detailed Breakdown */}
-          <div className="mt-6 p-4 bg-gray-800 rounded-lg">
-            <h4 className="text-lg font-semibold text-white mb-4">Մանրամասն հաշվարկ</h4>
-
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-400">Ընդամենը աշխատավարձ հարկերով + այլ ծախսեր (base):</span>
-                <span className="text-white">{formatAMD(calculations.totalSalaryWithTaxes + calculations.totalOtherCosts)}</span>
+            <div className="flex flex-wrap items-center gap-6">
+              <div className="flex items-center gap-3">
+                <Switch checked={state.vatPayer} onCheckedChange={c => setState(s => ({ ...s, vatPayer: c }))} />
+                <Label className="text-gold-400">ԱԱՀ վճարող (այո/ոչ)</Label>
               </div>
-
-              <div className="flex justify-between">
-                <span className="text-gray-400">Շահույթ ({profitMargin}%):</span>
-                <span className="text-white">{formatAMD(calculations.profitValue)}</span>
+              <div>
+                <p className="text-gray-400 text-sm">ԱԱՀ, 20 տոկոս</p>
+                <p className="text-white font-mono">{formatAMD(calculations.vat)}</p>
               </div>
-
-              <div className="flex justify-between">
-                <span className="text-gray-400">Ծառայության արժեք (բաժանումով):</span>
-                <span className="text-white">{formatAMD(calculations.serviceCostInclTaxes)}</span>
-              </div>
-
-              {vatPayer && (
-                <div className="flex justify-between">
-                  <span className="text-gray-400">ԱԱՀ (20%):</span>
-                  <span className="text-white">{formatAMD(calculations.vat)}</span>
-                </div>
-              )}
-
-              <Separator className="bg-gray-600 my-2" />
-
-              <div className="flex justify-between text-lg font-bold">
-                <span className="text-gold-400">Վերջնական գումար:</span>
-                <span className="text-gold-400">{formatAMD(calculations.finalTotalValue)}</span>
+              <div className="flex-1">
+                <p className="text-gray-400 text-sm">Ընդամենը արժեք</p>
+                <p className="text-2xl font-bold text-gold-400">{formatAMD(calculations.finalTotal)}</p>
               </div>
             </div>
           </div>
-
         </CardContent>
       </Card>
     </div>

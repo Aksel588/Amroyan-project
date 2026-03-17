@@ -167,10 +167,19 @@ const BlogEditor = () => {
     try {
       setSaving(true);
       
-      if (!post?.title || !post?.excerpt || !post?.content || !post?.category) {
+      const hasContent = post?.content?.replace(/<[^>]*>/g, '').replace(/\s+/g, '').trim().length > 0;
+      if (!post?.title?.trim() || !post?.excerpt?.trim() || !post?.category?.trim()) {
         toast({
           title: "Սխալ",
-          description: "Խնդրում ենք լրացնել բոլոր պարտադիր դաշտերը",
+          description: "Խնդրում ենք լրացնել վերնագիրը, համառոտ բնութագիրը և կատեգորիան",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (!hasContent) {
+        toast({
+          title: "Սխալ",
+          description: "Խնդրում ենք ավելացնել բովանդակություն",
           variant: "destructive",
         });
         return;

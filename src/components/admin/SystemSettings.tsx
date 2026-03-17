@@ -1,13 +1,12 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { laravelApi } from "@/integrations/laravel/client";
-import { Settings, Shield, Mail, Database, Bell } from "lucide-react";
+import { Settings, Database } from "lucide-react";
 
 const SystemSettings = () => {
   const { toast } = useToast();
@@ -151,88 +150,6 @@ const SystemSettings = () => {
                   onChange={(e) => handleSettingChange('welcomeMessage', e.target.value)}
                   placeholder="Բարի գալուստ հաղորդագրություն"
                   rows={3}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Security Settings */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold flex items-center gap-2">
-              <Shield className="h-5 w-5" />
-              Անվտանգություն
-            </h3>
-            
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Սպասարկման ռեժիմ</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Միացնելիս կայքը կլինի անմատչելի օգտատերերի համար
-                  </p>
-                </div>
-                <Switch
-                  checked={settings.maintenanceMode}
-                  onCheckedChange={(checked) => handleSettingChange('maintenanceMode', checked)}
-                />
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Գրանցման թույլտվություն</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Թույլ տալ նոր օգտատերերի գրանցումը
-                  </p>
-                </div>
-                <Switch
-                  checked={settings.allowRegistration}
-                  onCheckedChange={(checked) => handleSettingChange('allowRegistration', checked)}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Notification Settings */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold flex items-center gap-2">
-              <Bell className="h-5 w-5" />
-              Ծանուցումներ
-            </h3>
-            
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Էլ. նամակների ծանուցումներ</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Ուղարկել ծանուցումներ նոր հաղորդագրությունների համար
-                  </p>
-                </div>
-                <Switch
-                  checked={settings.emailNotifications}
-                  onCheckedChange={(checked) => handleSettingChange('emailNotifications', checked)}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Backup Settings */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold flex items-center gap-2">
-              <Database className="h-5 w-5" />
-              Պահեստավորում
-            </h3>
-            
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Ավտոմատ պահեստավորում</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Ավտոմատ ստեղծել տվյալների պահեստային պատճեններ
-                  </p>
-                </div>
-                <Switch
-                  checked={settings.autoBackup}
-                  onCheckedChange={(checked) => handleSettingChange('autoBackup', checked)}
                 />
               </div>
             </div>

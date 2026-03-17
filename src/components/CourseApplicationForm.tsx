@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { laravelApi } from '@/integrations/laravel/client';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { User, Mail, Phone, MessageSquare, Send, CheckCircle } from 'lucide-react';
 
 interface CourseApplicationFormProps {
@@ -13,6 +14,7 @@ interface CourseApplicationFormProps {
 }
 
 const CourseApplicationForm: React.FC<CourseApplicationFormProps> = ({ submittedFrom }) => {
+  const { t } = useLanguage();
   const [formData, setFormData] = useState({
     full_name: '',
     email: '',
@@ -31,8 +33,8 @@ const CourseApplicationForm: React.FC<CourseApplicationFormProps> = ({ submitted
     if (!formData.full_name || !formData.email || !formData.phone) {
       console.log('Validation failed - missing required fields');
       toast({
-        title: "Սխալ",
-        description: "Խնդրում ենք լրացնել բոլոր պարտադիր դաշտերը",
+        title: t('home.toast.error'),
+        description: t('home.toast.fillRequired'),
         variant: "destructive",
       });
       return;
@@ -61,14 +63,14 @@ const CourseApplicationForm: React.FC<CourseApplicationFormProps> = ({ submitted
       });
 
       toast({
-        title: "Հաջողություն",
-        description: "Ձեր դիմումը հաջողությամբ ուղարկվեց: Մենք կկապվենք ձեզ հետ:",
+        title: t('home.toast.success'),
+        description: t('home.toast.applicationSent'),
       });
     } catch (error) {
       console.error('Error submitting application:', error);
       toast({
-        title: "Սխալ",
-        description: "Չհաջողվեց ուղարկել դիմումը: Խնդրում ենք փորձել կրկին:",
+        title: t('home.toast.error'),
+        description: t('home.toast.sendFailed'),
         variant: "destructive",
       });
     } finally {
@@ -90,15 +92,15 @@ const CourseApplicationForm: React.FC<CourseApplicationFormProps> = ({ submitted
       <Card className="max-w-md mx-auto">
         <CardContent className="pt-6 text-center">
           <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold mb-2">Շնորհակալություն!</h3>
+          <h3 className="text-xl font-semibold mb-2">{t('home.applyDialog.thankYou')}</h3>
           <p className="text-muted-foreground mb-4">
-            Ձեր դիմումը հաջողությամբ ուղարկվեց: Մեր թիմը կկապվի ձեզ հետ մոտակա ժամանակներում:
+            {t('home.applyDialog.successMessage')}
           </p>
           <Button 
             onClick={() => setSubmitted(false)}
             variant="outline"
           >
-            Նոր դիմում ուղարկել
+            {t('home.applyDialog.submitAgain')}
           </Button>
         </CardContent>
       </Card>
@@ -108,32 +110,32 @@ const CourseApplicationForm: React.FC<CourseApplicationFormProps> = ({ submitted
   return (
     <Card className="max-w-md mx-auto">
       <CardHeader>
-        <CardTitle className="text-center">Դիմում դասընթացների համար</CardTitle>
+        <CardTitle className="text-center">{t('home.applyDialog.title')}</CardTitle>
         <CardDescription className="text-center">
-          Լրացրեք ձեր տվյալները և մենք կկապվենք ձեզ հետ
+          {t('home.applyDialog.description')}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
+          <div className="space-y-2">
             <Label htmlFor="full_name" className="flex items-center gap-2">
               <User className="h-4 w-4" />
-              Անուն Ազգանուն *
+              {t('home.applyDialog.fullName')} *
             </Label>
             <Input
               id="full_name"
               name="full_name"
               value={formData.full_name}
               onChange={handleInputChange}
-              placeholder="Ձեր անունն ու ազգանունը"
+              placeholder={t('home.applyDialog.placeholderName')}
               required
             />
           </div>
 
-          <div>
+          <div className="space-y-2">
             <Label htmlFor="email" className="flex items-center gap-2">
               <Mail className="h-4 w-4" />
-              Էլ. փոստ *
+              {t('home.applyDialog.email')} *
             </Label>
             <Input
               id="email"
@@ -141,37 +143,37 @@ const CourseApplicationForm: React.FC<CourseApplicationFormProps> = ({ submitted
               type="email"
               value={formData.email}
               onChange={handleInputChange}
-              placeholder="your@email.com"
+              placeholder={t('home.applyDialog.placeholderEmail')}
               required
             />
           </div>
 
-          <div>
+          <div className="space-y-2">
             <Label htmlFor="phone" className="flex items-center gap-2">
               <Phone className="h-4 w-4" />
-              Հեռախոսահամար *
+              {t('home.applyDialog.phone')} *
             </Label>
             <Input
               id="phone"
               name="phone"
               value={formData.phone}
               onChange={handleInputChange}
-              placeholder="+374 XX XXX XXX"
+              placeholder={t('home.applyDialog.placeholderPhone')}
               required
             />
           </div>
 
-          <div>
+          <div className="space-y-2">
             <Label htmlFor="message" className="flex items-center gap-2">
               <MessageSquare className="h-4 w-4" />
-              Հաղորդագրություն
+              {t('home.applyDialog.message')}
             </Label>
             <Textarea
               id="message"
               name="message"
               value={formData.message}
               onChange={handleInputChange}
-              placeholder="Լրացուցիչ տեղեկություններ կամ հարցեր..."
+              placeholder={t('home.applyDialog.placeholderMessage')}
               rows={3}
             />
           </div>
@@ -180,31 +182,14 @@ const CourseApplicationForm: React.FC<CourseApplicationFormProps> = ({ submitted
             {loading ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                Ուղարկվում է...
+                {t('home.applyDialog.submitting')}
               </>
             ) : (
               <>
                 <Send className="h-4 w-4 mr-2" />
-                Ուղարկել հայտը
+                {t('home.applyDialog.submit')}
               </>
             )}
-          </Button>
-          
-          {/* Debug button - remove after testing */}
-          <Button 
-            type="button" 
-            variant="outline" 
-            className="w-full mt-2"
-            onClick={() => {
-              console.log('Current form data:', formData);
-              console.log('Form validation:', {
-                hasName: !!formData.full_name,
-                hasEmail: !!formData.email,
-                hasPhone: !!formData.phone
-              });
-            }}
-          >
-            Debug Form Data
           </Button>
         </form>
       </CardContent>

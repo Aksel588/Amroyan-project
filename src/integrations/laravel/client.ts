@@ -1,5 +1,5 @@
 // Laravel API Client
-const LARAVEL_API_URL = import.meta.env.VITE_LARAVEL_API_URL || 'http://localhost:8000/api';
+const LARAVEL_API_URL = import.meta.env.VITE_LARAVEL_API_URL || "https://amroyancons.am/api";;
 
 class LaravelApiClient {
   private baseUrl: string;
@@ -318,6 +318,7 @@ class LaravelApiClient {
   async getUsers(params?: {
     search?: string;
     per_page?: number;
+    role?: string;
   }) {
     const queryParams = new URLSearchParams();
     if (params) {
@@ -450,6 +451,21 @@ class LaravelApiClient {
     });
   }
 
+  /** Download document file via API (avoids CORS). Returns blob. */
+  async downloadDocument(id: string): Promise<Blob> {
+    const url = `${this.baseUrl}/documents/${id}/download`;
+    const headers: HeadersInit = { Accept: 'application/pdf,*/*' };
+    if (this.token) {
+      headers['Authorization'] = `Bearer ${this.token}`;
+    }
+    const response = await fetch(url, { headers });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || `Download failed: ${response.status}`);
+    }
+    return response.blob();
+  }
+
   async toggleDocumentPublishStatus(id: string) {
     return await this.request(`/documents/${id}/toggle-publish`, {
       method: 'POST',
@@ -470,6 +486,14 @@ class LaravelApiClient {
 
   async getSetting(key: string) {
     return await this.request(`/settings/${key}`);
+  }
+
+  /** Set main admin by user id (user must have role=admin). Updates adminEmail in settings. */
+  async setMainAdmin(userId: number) {
+    return await this.request('/settings/main-admin', {
+      method: 'PUT',
+      body: JSON.stringify({ user_id: userId }),
+    });
   }
 
   async initializeDefaultSettings() {
@@ -510,6 +534,23 @@ class LaravelApiClient {
       });
     }
     return await this.request(`/newsletter/subscribers?${queryParams.toString()}`);
+  }
+
+  /**
+   * Download the warehouse documents PDF. Returns the blob for download; throws on error.
+   */
+  async downloadWarehousePdf(): Promise<Blob> {
+    const url = `${this.baseUrl}/archive/warehouse-documents`;
+    const headers: HeadersInit = { Accept: 'application/pdf' };
+    if (this.token) {
+      headers['Authorization'] = `Bearer ${this.token}`;
+    }
+    const response = await fetch(url, { headers });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || `Download failed: ${response.status}`);
+    }
+    return response.blob();
   }
 }
 

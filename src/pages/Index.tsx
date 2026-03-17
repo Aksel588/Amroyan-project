@@ -13,6 +13,26 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { laravelApi } from '@/integrations/laravel/client';
 import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+const LARAVEL_ORIGIN = (() => {
+  const url = import.meta.env.VITE_LARAVEL_API_URL || "https://amroyancons.am/api";
+  try {
+    return new URL(url).origin;
+  } catch {
+    return (url && typeof url === 'string' ? url.replace(/\/api\/?$/, "") : "") || "http://127.0.0.1:8000";
+  }
+})();
+
+function absoluteImageUrl(url: string): string {
+  if (!url) return url;
+  if (url.includes("/api/storage/")) {
+    const path = url.replace(/^https?:\/\/[^/]+\/api\/storage\//, "/storage/");
+    return LARAVEL_ORIGIN.replace(/\/$/, "") + path;
+  }
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  const base = LARAVEL_ORIGIN.replace(/\/$/, "");
+  return base + (url.startsWith("/") ? url : "/" + url);
+}
+
 interface BlogPost {
   id: string;
   title: string;
@@ -20,6 +40,7 @@ interface BlogPost {
   content: string;
   author: string;
   category: string;
+  featured_image?: string;
   created_at: string;
   slug: string;
 }
@@ -47,40 +68,30 @@ const Index = () => {
   const [applyOpen, setApplyOpen] = useState(false);
   const [appForm, setAppForm] = useState({ full_name: '', phone: '', email: '' });
   const [submitting, setSubmitting] = useState(false);
-  const services = [{
-    icon: Calculator,
-    title: "Հաշվապահական հաշվառում"
-  }, {
-    icon: Users,
-    title: "Հարկային, ֆինանսական և կադրային խորհրդատվություն"
-  }, {
-    icon: BarChart3,
-    title: "Ֆինանսական վերլուծություն"
-  }, {
-    icon: FileText,
-    title: "Ֆինանսական հաշվետվություն"
-  }, {
-    icon: TrendingUp,
-    title: "Բիզնես Խորհրդատվություն"
-  }, {
-    icon: GraduationCap,
-    title: "Խմբային և անհատական հաշվապահական դասընթացներ"
-  }];
+  const serviceList = (() => {
+    const list = t('home.services.list');
+    return Array.isArray(list) ? list : [];
+  })();
+  const services = [
+    { icon: Calculator, titleKey: 0 },
+    { icon: Users, titleKey: 1 },
+    { icon: BarChart3, titleKey: 2 },
+    { icon: FileText, titleKey: 3 },
+    { icon: TrendingUp, titleKey: 4 },
+    { icon: GraduationCap, titleKey: 5 },
+  ].map((s, i) => ({ ...s, title: serviceList[i] ?? '' }));
   const featuresData = t('home.features.items');
   const features = Array.isArray(featuresData) ? featuresData : [];
-  const stats = [{
-    number: '35+',
-    label: 'գործընկերեներ'
-  }, {
-    number: '5+',
-    label: 'տարիների փորձ'
-  }, {
-    number: '20%',
-    label: 'տարեկան աճ'
-  }, {
-    number: '120+',
-    label: 'կատարված նախագծեր'
-  }];
+  const statsLabels = (() => {
+    const labels = t('home.hero.statsLabels');
+    return Array.isArray(labels) ? labels : ['', '', '', ''];
+  })();
+  const stats = [
+    { number: '35+', labelKey: 0 },
+    { number: '5+', labelKey: 1 },
+    { number: '20%', labelKey: 2 },
+    { number: '120+', labelKey: 3 },
+  ].map((s) => ({ ...s, label: statsLabels[s.labelKey] ?? '' }));
   useEffect(() => {
     fetchBlogPosts();
     fetchDocuments();
@@ -149,8 +160,8 @@ const Index = () => {
   const submitApplication = async () => {
     if (!appForm.full_name || !appForm.phone || !appForm.email) {
       toast({
-        title: "Սխալ",
-        description: "Խնդրում ենք լրացնել բոլոր պարտադիր դաշտերը",
+        title: t('home.toast.error'),
+        description: t('home.toast.fillRequired'),
         variant: "destructive",
       });
       return;
@@ -158,33 +169,27 @@ const Index = () => {
     
     setSubmitting(true);
     try {
-      console.log('Submitting application:', appForm);
-      
       const response = await laravelApi.createCourseApplication({
         full_name: appForm.full_name,
         phone: appForm.phone,
         email: appForm.email,
-        message: 'Դիմում դասընթացների համար - գլխավոր էջից',
+        message: 'Course application from main page',
         submitted_from: 'main_page_course_card'
       });
       
-      console.log('Application submitted successfully:', response);
-      
-      // Show success message
       toast({
-        title: "Հաջողություն",
-        description: "Ձեր դիմումը հաջողությամբ ուղարկվեց! Մենք կկապվենք ձեզ հետ:",
+        title: t('home.toast.success'),
+        description: t('home.toast.applicationSent'),
       });
       
-      // Close dialog and reset form
       setApplyOpen(false);
       setAppForm({ full_name: '', phone: '', email: '' });
       
     } catch (error) {
       console.error('Application submit error:', error);
       toast({
-        title: "Սխալ",
-        description: "Չհաջողվեց ուղարկել դիմումը: Խնդրում ենք փորձել կրկին:",
+        title: t('home.toast.error'),
+        description: t('home.toast.sendFailed'),
         variant: "destructive",
       });
     } finally {
@@ -202,10 +207,10 @@ const Index = () => {
         <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="max-w-4xl mx-auto animate-fade-in-up">
             <h1 className="text-4xl sm:text-5xl md:text-6xl mb-4 sm:mb-6 leading-tight font-bold lg:text-5xl">
-              <span className="gradient-text py-0 px-0 mx-0 my-[8px] font-semibold leading-relaxed">Պրոֆեսիոնալ հաշվապահական և ֆինանսական ծառայություններ</span>
+              <span className="gradient-text py-0 px-0 mx-0 my-[8px] font-semibold leading-relaxed">{t('home.hero.mainTitle')}</span>
             </h1>
             <p className="text-lg text-gray-300 mb-6 sm:mb-8 my-0 py-[20px] sm:text-2xl">
-              Ձեր բիզնեսի հաջողության համար
+              {t('home.hero.tagline')}
             </p>
 
 
@@ -252,7 +257,7 @@ const Index = () => {
               <span className="gradient-text">{t('home.services.title')}</span>
             </h2>
             <p className="text-lg sm:text-xl text-gray-300 max-w-2xl mx-auto px-4">
-              Առաջարկում ենք ամբողջական լուծումներ Ձեր բիզնեսի ֆինանսական կարիքների համար
+              {t('home.services.subtitle')}
             </p>
           </div>
 
@@ -266,9 +271,9 @@ const Index = () => {
                   <h3 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">
                     {service.title}
                   </h3>
-                  {service.title.includes('դասընթացներ') && (
+                  {service.titleKey === 5 && (
                     <Button onClick={() => setApplyOpen(true)} className="mt-2 min-h-[44px] w-full sm:w-auto bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-black">
-                      Դիմել
+                      {t('home.services.apply')}
                     </Button>
                   )}
                 </CardContent>
@@ -285,31 +290,25 @@ const Index = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 items-center">
               <div className="order-2 lg:order-1">
                 <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-6 sm:mb-8">
-                  <span className="gradient-text">Ինչու՞ մենք</span>
+                  <span className="gradient-text">{t('home.features.title')}</span>
                 </h2>
                 
                 <div className="space-y-3 sm:space-y-4">
-                  <div className="flex items-center space-x-3 sm:space-x-4">
-                    <CheckCircle className="text-gold-400 flex-shrink-0" size={20} />
-                    <span className="text-base sm:text-lg text-gray-300">Փորձառու մասնագետների թիմ</span>
-                  </div>
-                  <div className="flex items-center space-x-3 sm:space-x-4">
-                    <CheckCircle className="text-gold-400 flex-shrink-0" size={20} />
-                    <span className="text-base sm:text-lg text-gray-300">Հարկային և տեսչական ստուգումների ընթացքում պատվիրատուի շահերի պաշտպանում</span>
-                  </div>
-                  <div className="flex items-center space-x-3 sm:space-x-4">
-                    <CheckCircle className="text-gold-400 flex-shrink-0" size={20} />
-                    <span className="text-base sm:text-lg text-gray-300">Հուսալի և վստահելի</span>
-                  </div>
-                  <div className="flex items-center space-x-3 sm:space-x-4">
-                    <CheckCircle className="text-gold-400 flex-shrink-0" size={20} />
-                    <span className="text-base sm:text-lg text-gray-300">Ժամանակակից տեխնոլոգիաներ և գործիքակազմի կիրառում</span>
-                  </div>
+                  {(() => {
+                    const bullets = t('home.features.bullets');
+                    const arr = Array.isArray(bullets) ? bullets : [];
+                    return [0, 1, 2, 3].map((i) => (
+                      <div key={i} className="flex items-center space-x-3 sm:space-x-4">
+                        <CheckCircle className="text-gold-400 flex-shrink-0" size={20} />
+                        <span className="text-base sm:text-lg text-gray-300">{arr[i] ?? ''}</span>
+                      </div>
+                    ));
+                  })()}
                 </div>
 
                 <Button asChild className="bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-black font-semibold mt-6 sm:mt-8 min-h-[44px] w-full sm:w-auto">
                   <Link to="/about">
-                    Մեր մասին <ArrowRight className="ml-2" size={16} />
+                    {t('home.aboutBtn')} <ArrowRight className="ml-2" size={16} />
                   </Link>
                 </Button>
               </div>
@@ -320,9 +319,9 @@ const Index = () => {
                   <CardContent className="p-6 sm:p-8">
                     <Award className="text-gold-400 mb-4 sm:mb-6" size={40} />
                     <h3 className="text-xl sm:text-2xl font-bold text-white mb-3 sm:mb-4">
-                      Մենք ապահովում ենք
+                      {t('home.weProvideTitle')}
                     </h3>
-                    <p className="text-gray-300 leading-relaxed text-sm sm:text-base">Պրոֆեսիոնալ ծառայությունների մատուցումը, ինչը նպաստում է Ձեր բիզնեսի աճին։</p>
+                    <p className="text-gray-300 leading-relaxed text-sm sm:text-base">{t('home.weProvideDesc')}</p>
                   </CardContent>
                 </Card>
               </div>
@@ -336,17 +335,17 @@ const Index = () => {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12 sm:mb-16">
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6">
-              <span className="gradient-text">Շտեմարան</span>
+              <span className="gradient-text">{t('archive.heroTitle')}</span>
             </h2>
             <p className="text-gray-300 max-w-2xl mx-auto text-lg">
-              Օգտակար փաստաթղթեր և տեղեկատվություն
+              {t('archive.heroSubtitle')}
             </p>
           </div>
 
           {documentsLoading ? (
             <div className="text-center py-12">
               <div className="animate-spin w-8 h-8 border-2 border-gold-400 border-t-transparent rounded-full mx-auto"></div>
-              <p className="text-gray-400 mt-4">Բեռնում...</p>
+              <p className="text-gray-400 mt-4">{t('home.loading')}</p>
             </div>
           ) : documents.length > 0 ? (
             <>
@@ -419,7 +418,7 @@ const Index = () => {
                                   disabled={!doc.file_url}
                                   className="text-gold-400 hover:text-gold-300 h-auto p-0"
                                 >
-                                  Բացել <ArrowRight size={12} className="ml-1" />
+                                  {t('archive.openDoc')} <ArrowRight size={12} className="ml-1" />
                                 </Button>
                               </div>
                             </CardContent>
@@ -433,7 +432,7 @@ const Index = () => {
               <div className="text-center mt-8">
                 <Button asChild className="bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-black font-semibold min-h-[44px] w-full sm:w-auto">
                   <Link to="/archive">
-                    Տեսնել բոլոր փաստաթղթերը <ArrowRight className="ml-2" size={16} />
+                    {t('archive.seeAllDocuments')} <ArrowRight className="ml-2" size={16} />
                   </Link>
                 </Button>
               </div>
@@ -441,7 +440,7 @@ const Index = () => {
           ) : (
             <div className="text-center py-12">
               <FileText className="mx-auto text-gray-500 mb-4" size={48} />
-              <p className="text-gray-500">Դեռ փաստաթղթեր չեն ավելացվել</p>
+              <p className="text-gray-500">{t('home.noDocumentsYet')}</p>
             </div>
           )}
         </div>
@@ -452,13 +451,24 @@ const Index = () => {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12 sm:mb-16">
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6">
-              <span className="gradient-text">Նորություններ</span>
+              <span className="gradient-text">{t('blog.heroTitle')}</span>
             </h2>
             
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 mb-8 sm:mb-12">
-            {blogPosts.map(post => <Card key={post.slug} className="bg-gradient-to-b from-gray-900 to-black border-gold-500/20 hover:border-gold-400/40 transition-all duration-300 group flex flex-col">
+            {blogPosts.map(post => <Card key={post.slug} className="bg-gradient-to-b from-gray-900 to-black border-gold-500/20 hover:border-gold-400/40 transition-all duration-300 group flex flex-col overflow-hidden">
+                <div className="aspect-video w-full bg-gradient-to-br from-gold-500/20 to-gold-600/20 flex items-center justify-center shrink-0">
+                  {post.featured_image ? (
+                    <img
+                      src={absoluteImageUrl(post.featured_image)}
+                      alt={post.title}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="text-4xl text-gold-400">📄</div>
+                  )}
+                </div>
                 <CardContent className="p-4 sm:p-6 flex flex-col flex-grow">
                   <div className="mb-3 sm:mb-4">
                     <span className="bg-gold-500/20 text-gold-400 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm">
@@ -487,7 +497,7 @@ const Index = () => {
                   
                   <Button asChild variant="ghost" className="text-gold-400 hover:text-gold-300 p-0 h-auto text-sm self-start min-h-[44px] flex items-center">
                     <Link to={`/blog/${post.slug}`}>
-                      Կարդալ ավելին <ArrowRight size={14} className="ml-1" />
+                      {t('blog.readMore')} <ArrowRight size={14} className="ml-1" />
                     </Link>
                   </Button>
                 </CardContent>
@@ -497,7 +507,7 @@ const Index = () => {
           <div className="text-center">
             <Button asChild className="bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-black font-semibold min-h-[44px] w-full sm:w-auto">
               <Link to="/blog">
-                Տեսնել բոլորը <ArrowRight className="ml-2" size={16} />
+                {t('blog.seeAll')} <ArrowRight className="ml-2" size={16} />
               </Link>
             </Button>
           </div>
@@ -508,29 +518,29 @@ const Index = () => {
       <Dialog open={applyOpen} onOpenChange={setApplyOpen}>
         <DialogContent className="bg-black border-gold-500/20">
           <DialogHeader>
-            <DialogTitle className="text-white">Դիմում դասընթացներին</DialogTitle>
+            <DialogTitle className="text-white">{t('home.applyDialog.title')}</DialogTitle>
             <DialogDescription className="text-gray-400">
-              Լրացրեք տվյալները, մենք կհետադարձկանենք Ձեզ հետ:
+              {t('home.applyDialog.description')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="full_name">Անուն Ազգանուն</Label>
-              <Input id="full_name" value={appForm.full_name} onChange={(e) => setAppForm({ ...appForm, full_name: e.target.value })} placeholder="Ձեր անուն ազգանունը" />
+              <Label htmlFor="full_name">{t('home.applyDialog.fullName')}</Label>
+              <Input id="full_name" value={appForm.full_name} onChange={(e) => setAppForm({ ...appForm, full_name: e.target.value })} placeholder={t('home.applyDialog.placeholderName')} />
             </div>
             <div>
-              <Label htmlFor="phone">Հեռախոսահամար</Label>
-              <Input id="phone" value={appForm.phone} onChange={(e) => setAppForm({ ...appForm, phone: e.target.value })} placeholder="+374 ..." />
+              <Label htmlFor="phone">{t('home.applyDialog.phone')}</Label>
+              <Input id="phone" value={appForm.phone} onChange={(e) => setAppForm({ ...appForm, phone: e.target.value })} placeholder={t('home.applyDialog.placeholderPhone')} />
             </div>
             <div>
-              <Label htmlFor="email">Էլ. փոստ</Label>
+              <Label htmlFor="email">{t('home.applyDialog.email')}</Label>
               <Input id="email" type="email" value={appForm.email} onChange={(e) => setAppForm({ ...appForm, email: e.target.value })} placeholder="name@example.com" />
             </div>
           </div>
           <DialogFooter className="flex gap-2 justify-end">
-            <Button variant="outline" onClick={() => setApplyOpen(false)}>Փակել</Button>
+            <Button variant="outline" onClick={() => setApplyOpen(false)}>{t('home.applyDialog.close')}</Button>
             <Button onClick={submitApplication} disabled={submitting} className="bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-black">
-              {submitting ? 'Ուղարկվում է...' : 'Ուղարկել հայտը'}
+              {submitting ? t('home.applyDialog.submitting') : t('home.applyDialog.submit')}
             </Button>
           </DialogFooter>
         </DialogContent>

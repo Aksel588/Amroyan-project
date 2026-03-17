@@ -23,48 +23,39 @@ const ArmenianPayrollCalculator = () => {
   const [isITCompany, setIsITCompany] = useState(false);
   const [inputAmount, setInputAmount] = useState<number>(0);
 
-  // Calculate stamp duty based on salary amount and social payer status
+  // Stamp duty. Gross base: ≤100k→1500, ≤200k→3000, ≤500k→5500, ≤1M→8500, >1M→15000.
+  // Net base (social): ≤73500→1500, ≤147000→3000, ≤369500→5500, ≤741500→8500, >741500→15000.
+  // Net base (non-social): ≤78500→1500, ≤157000→3000, ≤394500→5500, ≤791500→8500, >791500→15000.
   const calculateStampDuty = (salary: number, isSocialPayer: boolean, isNetSalary: boolean = false): number => {
     if (salary === 0) return 0;
-
-    // Different thresholds for different scenarios
     if (isNetSalary) {
-      // Net salary thresholds
       if (isSocialPayer) {
-        if (salary <= 100000) return 1500;
-        if (salary <= 200000) return 3000;
-        if (salary <= 500000) return 5500;
-        if (salary <= 1000000) return 8500;
-        return 15000;
-      } else {
-        if (salary <= 100000) return 1500;
-        if (salary <= 200000) return 3000;
-        if (salary <= 500000) return 5500;
-        if (salary <= 1000000) return 8500;
+        if (salary <= 73500) return 1500;
+        if (salary <= 147000) return 3000;
+        if (salary <= 369500) return 5500;
+        if (salary <= 741500) return 8500;
         return 15000;
       }
-    } else {
-      // Gross salary thresholds
-      if (salary <= 100000) return 1500;
-      if (salary <= 200000) return 3000;
-      if (salary <= 500000) return 5500;
-      if (salary <= 1000000) return 8500;
+      if (salary <= 78500) return 1500;
+      if (salary <= 157000) return 3000;
+      if (salary <= 394500) return 5500;
+      if (salary <= 791500) return 8500;
       return 15000;
     }
+    if (salary <= 100000) return 1500;
+    if (salary <= 200000) return 3000;
+    if (salary <= 500000) return 5500;
+    if (salary <= 1000000) return 8500;
+    return 15000;
   };
 
   // Calculate social contribution (pension system) based on gross salary
+  // Spec: ≤500,000 → 5%; >500,000 and ≤1,125,000 → 10% − 25,000; >1,125,000 → 87,500
   const calculateSocialContribution = (grossSalary: number): number => {
     if (!isSocialPayer) return 0;
-    
-    // Mandatory participants (born 1974 or later)
-    if (grossSalary < 500000) {
-      return grossSalary * 0.05; // 5% paid by individual
-    } else if (grossSalary < 1125000) {
-      return (grossSalary * 0.10) - 25000; // 10% - 25,000 (state pays 25,000)
-    } else {
-      return 87500; // Fixed amount (state pays 25,000, participant pays 87,500)
-    }
+    if (grossSalary <= 500000) return grossSalary * 0.05;
+    if (grossSalary <= 1125000) return grossSalary * 0.10 - 25000;
+    return 87500;
   };
 
   // Calculate income tax (20% for regular, 10% for IT companies)
@@ -91,30 +82,23 @@ const ArmenianPayrollCalculator = () => {
     };
   };
 
-  // Net to Dirty calculation
+  // Net to Gross: stamp from net (different net thresholds); then gross = f(net, stamp) per spec.
   const calculateNetToDirty = (netSalary: number): PayrollCalculation => {
     const stampDuty = calculateStampDuty(netSalary, isSocialPayer, true);
-    
     let grossSalary: number;
     const taxRate = isITCompany ? 0.10 : 0.20;
-    
     if (isSocialPayer) {
-      // With social contributions
-      if (netSalary < 500000) {
-        // 5% social contribution
-        grossSalary = (netSalary + stampDuty) / (1 - taxRate - 0.05);
-      } else if (netSalary < 1125000) {
-        // 10% social contribution with state subsidy
-        grossSalary = (netSalary + stampDuty + 25000) / (1 - taxRate - 0.10);
+      // Spec: net ≤369,500 → (net+stamp)/0.75; 369,500 < net ≤797,500 → (net+stamp−25,000)/0.7; net >797,500 → (net+stamp+87,500)/0.8
+      if (netSalary <= 369500) {
+        grossSalary = (netSalary + stampDuty) / 0.75;
+      } else if (netSalary <= 797500) {
+        grossSalary = (netSalary + stampDuty - 25000) / 0.7;
       } else {
-        // Fixed social contribution
-        grossSalary = (netSalary + stampDuty + 87500) / (1 - taxRate);
+        grossSalary = (netSalary + stampDuty + 87500) / 0.8;
       }
     } else {
-      // For non-social payers
-      grossSalary = (netSalary + stampDuty) / (1 - taxRate);
+      grossSalary = (netSalary + stampDuty) / 0.8;
     }
-
     const incomeTax = calculateIncomeTax(grossSalary);
     const socialContribution = calculateSocialContribution(grossSalary);
     const totalDeductions = incomeTax + socialContribution + stampDuty;
@@ -187,8 +171,35 @@ const ArmenianPayrollCalculator = () => {
               Հաշվեք կեղտոտ/մաքուր աշխատավարձը՝ եկամտահարկ, սոցիալական վճարներ և դրոշմանիշային վճար
             </CardDescription>
           </CardHeader>
-          
+
           <CardContent className="space-y-6">
+            {/* Աշխատավարձի հաշվիչի նկարագրություն (ըստ սպեցիֆիկացիայի) */}
+            <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-5 text-sm text-gray-300 space-y-4">
+              <p>
+                Աշխատավարձի հաշվիչը հնարավորություն է տալիս պարզ և մատչելի կերպով հաշվարկել աշխատավարձի չափը, հարկերը և այլ վճարների չափերը: Հաշվիչի միջոցով կարելի է հաշվարկել և՛ մաքուր աշխատավարձը (հարկերից հետո)՝ նշելով գրանցված աշխատավարձի չափը, և՛ գրանցված աշխատավարձը (մինչև հարկումը)՝ նշելով մաքուր աշխատավարձը:
+              </p>
+              <div>
+                <h4 className="font-semibold text-gold-400 mb-1">Եկամտային Հարկ</h4>
+                <p>2023թ.-ի հունվարի 1-ից եկամտային հարկի դրույքաչափը կազմում է 20%: Հարկային արտոնություններից օգտվող ՏՏ ոլորտի լիցենզավորված ընկերությունների համար եկամտային հարկը կազմում է 10%:</p>
+              </div>
+              <div>
+                <h4 className="font-semibold text-gold-400 mb-1">Պարտադիր Կուտակային Կենսաթոշակային Համակարգ</h4>
+                <p className="mb-2">Պարտադիր մասնակցություն — Կուտակային կենսաթոշակային համակարգի մասնակից՝ ծնված 1974թ. և դրանից հետո: Կամավոր մասնակցություն — Մինչև 1974թ. ծնվածները, ինչպես նաև ինքնազբաղված անձինք՝ անկախ տարիքից:</p>
+                <p className="mb-2">2023թ. հունվարի 1-ից գործում են հետևյալ կարգավորումները:</p>
+                <ul className="list-disc list-inside space-y-1 text-gray-400">
+                  <li>Պարտադիր մասնակիցների համար՝ պարտադիր կուտակային վճարի չափը կազմում է անձի բազային եկամտի 10%-ը: Եթե բազային եկամուտը 500,000 դրամից պակաս է, ապա 5% վճարվում է անձի, իսկ մյուս 5%-ը պետության կողմից:</li>
+                  <li>Եթե բազային եկամուտը գերազանցում է 500,000 դրամը, սակայն պակաս է նվազագույն աշխատավարձի 15-ապատիկից (1,125,000 դրամ), ապա պետության կողմից վճարվում է 25,000 դրամ, իսկ մասնակցի կողմից՝ բազային եկամտի 10% − 25,000 դրամ:</li>
+                  <li>Եթե բազային եկամուտը գերազանցում է 1,125,000 դրամը, ապա պետության կողմից վճարվում է 25,000 դրամ, իսկ անձի կողմից՝ 87,500 դրամ:</li>
+                  <li>Կուտակային համակարգին մինչև 2018թ. հուլիս ամիսը կամավոր միացած անձանց համար գործում են պարտադիր մասնակիցների համար նախատեսված պայմանները:</li>
+                  <li>2018թ.-ի հուլիսից համակարգին կամավոր միացած անձանց համար կուտակային վճարի չափը 5% է, եթե բազային եկամուտը չի գերազանցում 1,125,000 դրամը, և 56,250 դրամ, եթե գերազանցում է:</li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-semibold text-gold-400 mb-1">Դրոշմանիշային վճար</h4>
+                <p>2021թ. հունվարի 1-ից Զինծառայողների ապահովագրության հիմնադրամի դրոշմանիշային վճարները կատարվում են հետևյալ դրույքաչափերով: Մինչև 100,000 դրամ հաշվարկման բազայի դեպքում՝ 1,500 դրամ; 100,001–200,000 դրամ՝ 3,000 դրամ; 200,001–500,000 դրամ՝ 5,500 դրամ; 500,001–1,000,000 դրամ՝ 8,500 դրամ; 1,000,001 դրամ և ավելի՝ 15,000 դրամ:</p>
+              </div>
+            </div>
+
             {/* Instructions */}
             <div className="bg-gold-900/20 border border-gold-500/30 rounded-lg p-6">
               <h3 className="text-xl font-semibold text-gold-400 mb-4">Հաշվարկի կարգ</h3>

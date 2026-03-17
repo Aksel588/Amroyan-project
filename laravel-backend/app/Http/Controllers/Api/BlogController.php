@@ -36,6 +36,27 @@ class BlogController extends Controller
         return $slug;
     }
 
+    /**
+     * Normalize featured_image to absolute URL using /api/blog-images/ so it works without storage symlink.
+     */
+    private function normalizeFeaturedImageUrl(?string $url, string $baseUrl): string
+    {
+        if (empty($url)) {
+            return $url ?? '';
+        }
+        // Extract filename from .../blog-images/filename or .../storage/blog-images/filename
+        if (preg_match('#(?:^|/)blog-images/([^/]+)$#', $url, $m)) {
+            return $baseUrl . '/api/blog-images/' . $m[1];
+        }
+        if (!filter_var($url, FILTER_VALIDATE_URL)) {
+            return $baseUrl . (str_starts_with($url, '/') ? $url : '/' . $url);
+        }
+        if (str_contains($url, '/api/storage/')) {
+            return $baseUrl . preg_replace('#^https?://[^/]+/api#', '', $url);
+        }
+        return $url;
+    }
+
     public function index(Request $request)
     {
         $query = BlogPost::query();
@@ -73,6 +94,16 @@ class BlogController extends Controller
         // Pagination
         $perPage = $request->get('per_page', 10);
         $posts = $query->paginate($perPage);
+
+        // Ensure featured_image URLs are absolute and use /api/blog-images/ so they work without storage symlink
+        $baseUrl = rtrim($request->getSchemeAndHttpHost(), '/');
+        $posts->getCollection()->transform(function ($post) use ($baseUrl) {
+            if (empty($post->featured_image)) {
+                return $post;
+            }
+            $post->featured_image = $this->normalizeFeaturedImageUrl($post->featured_image, $baseUrl);
+            return $post;
+        });
 
         return response()->json($posts);
     }
@@ -127,6 +158,11 @@ class BlogController extends Controller
     public function show($id)
     {
         $post = BlogPost::findOrFail($id);
+
+        if (!empty($post->featured_image)) {
+            $baseUrl = rtrim(request()->getSchemeAndHttpHost(), '/');
+            $post->featured_image = $this->normalizeFeaturedImageUrl($post->featured_image, $baseUrl);
+        }
 
         return response()->json($post);
     }

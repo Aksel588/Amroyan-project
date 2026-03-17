@@ -12,11 +12,16 @@ class UserController extends Controller
     {
         $perPage = $request->get('per_page', 10);
         $search = $request->get('search');
+        $role = $request->get('role');
         
         $query = User::query();
         
         if ($search) {
             $query->where('email', 'like', "%{$search}%");
+        }
+        
+        if ($role !== null && $role !== '') {
+            $query->where('role', $role);
         }
         
         $users = $query->paginate($perPage);

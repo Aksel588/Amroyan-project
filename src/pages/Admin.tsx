@@ -5,17 +5,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { laravelApi } from "@/integrations/laravel/client";
 import { useToast } from "@/hooks/use-toast";
-import { FileText, Users, Upload, MessageSquare, Settings, PenTool, BarChart3, Database, Eye, Edit, Trash2, Mail, Phone, Calendar, ExternalLink, Check, X, Calculator } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { FileText, Users, MessageSquare, PenTool, BarChart3, Eye, Edit, Trash2, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import DocumentUpload from "@/components/admin/DocumentUpload";
 import UserManagement from "@/components/admin/UserManagement";
 import SystemSettings from "@/components/admin/SystemSettings";
-import CalculatorsManagement from "@/components/admin/CalculatorsManagement";
 import ContactManagement from "@/components/admin/ContactManagement";
 import CourseApplicationManagement from "@/components/admin/CourseApplicationManagement";
 
 const Admin = () => {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   
   const [stats, setStats] = useState({
@@ -127,8 +128,8 @@ const Admin = () => {
     try {
       await laravelApi.logout();
       toast({
-        title: "Դուրս գալիս",
-        description: "Դուք հաջողությամբ դուրս եկաք համակարգից:",
+        title: t('adminPanel.signOutToast'),
+        description: t('adminPanel.signOutSuccess'),
       });
       
       // Dispatch custom event to notify other components of auth state change
@@ -140,8 +141,8 @@ const Admin = () => {
       // Even if logout fails, clear local storage
       localStorage.removeItem('laravel_token');
       toast({
-        title: "Դուրս գալիս",
-        description: "Դուք հաջողությամբ դուրս եկաք համակարգից:",
+        title: t('adminPanel.signOutToast'),
+        description: t('adminPanel.signOutSuccess'),
       });
       
       // Dispatch custom event to notify other components of auth state change
@@ -163,13 +164,13 @@ const Admin = () => {
       );
       
       toast({
-        title: `Գրառումը ${!currentStatus ? 'հրապարակվեց' : 'թաքցվեց'}`,
+        title: !currentStatus ? t('adminPanel.postPublished') : t('adminPanel.postHidden'),
       });
     } catch (error) {
       console.error('Error updating blog post:', error);
       toast({
-        title: "Սխալ",
-        description: "Չհաջողվեց թարմացնել գրառումը",
+        title: t('adminPanel.toastError'),
+        description: t('adminPanel.postUpdateFailed'),
         variant: "destructive"
       });
     }
@@ -177,14 +178,14 @@ const Admin = () => {
 
   const handleDeletePost = async (postId: string) => {
     try {
-      const confirmed = window.confirm('Ջնջե՞լ գրառումը բոլորովին.');
+      const confirmed = window.confirm(t('adminPanel.confirmDeletePost'));
       if (!confirmed) return;
       await laravelApi.deleteBlogPost(postId);
       setBlogPosts(prev => prev.filter(p => p.id !== postId));
-      toast({ title: 'Գրառումը ջնջվեց' });
+      toast({ title: t('adminPanel.postDeleted') });
     } catch (error) {
       console.error('Error deleting blog post:', error);
-      toast({ title: 'Սխալ', description: 'Չհաջողվեց ջնջել գրառումը', variant: 'destructive' });
+      toast({ title: t('adminPanel.toastError'), description: t('adminPanel.postDeleteFailed'), variant: 'destructive' });
     }
   };
 
@@ -205,8 +206,8 @@ const Admin = () => {
       
       // Show success message
       toast({
-        title: `Փաստաթուղթը ${!currentStatus ? 'հրապարակվեց' : 'թաքցվեց'}`,
-        description: "Փոփոխությունները պահպանվեցին տվյալների բազայում",
+        title: !currentStatus ? t('adminPanel.docPublished') : t('adminPanel.docHidden'),
+        description: t('adminPanel.changesSaved'),
       });
       
       // Refresh the documents list from the database to ensure sync
@@ -223,8 +224,8 @@ const Admin = () => {
       ));
       
       toast({
-        title: "Սխալ",
-        description: error.message || "Չհաջողվեց թարմացնել փաստաթուղթը",
+        title: t('adminPanel.toastError'),
+        description: error.message || t('adminPanel.docUpdateFailed'),
         variant: "destructive"
       });
     }
@@ -232,16 +233,16 @@ const Admin = () => {
 
   const handleDeleteDocument = async (docId: string, fileUrl?: string) => {
     try {
-      const confirmed = window.confirm('Ջնջե՞լ փաստաթուղթը բոլորովին. Այս գործողությունը անդառնալի է.');
+      const confirmed = window.confirm(t('adminPanel.confirmDeleteDoc'));
       if (!confirmed) return;
 
       await laravelApi.deleteDocument(docId);
 
       setDocuments(prev => prev.filter(d => d.id !== docId));
-      toast({ title: 'Փաստաթուղթը ջնջվեց' });
+      toast({ title: t('adminPanel.docDeleted') });
     } catch (err) {
       console.error('Error deleting document:', err);
-      toast({ title: 'Սխալ', description: 'Չհաջողվեց ջնջել փաստաթուղթը', variant: 'destructive' });
+      toast({ title: t('adminPanel.toastError'), description: t('adminPanel.docDeleteFailed'), variant: 'destructive' });
     }
   };
 
@@ -249,23 +250,23 @@ const Admin = () => {
     try {
       await laravelApi.updateCourseApplication(id, { status });
       setCourseApplications(prev => prev.map(a => a.id === id ? { ...a, status } : a));
-      toast({ title: status === 'approved' ? 'Հայտը հաստատվեց' : 'Հայտը մերժվեց' });
+      toast({ title: status === 'approved' ? t('adminPanel.applicationApproved') : t('adminPanel.applicationRejected') });
     } catch (error) {
       console.error('Error updating application:', error);
-      toast({ title: 'Սխալ', description: 'Չհաջողվեց թարմացնել հայտը', variant: 'destructive' });
+      toast({ title: t('adminPanel.toastError'), description: t('adminPanel.applicationUpdateFailed'), variant: 'destructive' });
     }
   };
 
   const deleteCourseApplication = async (id: string) => {
     try {
-      const confirmed = window.confirm('Ջնջե՞լ դիմումը բոլորովին.');
+      const confirmed = window.confirm(t('adminPanel.confirmDeleteApplication'));
       if (!confirmed) return;
       await laravelApi.deleteCourseApplication(id);
       setCourseApplications(prev => prev.filter(a => a.id !== id));
-      toast({ title: 'Դիմումը ջնջվեց' });
+      toast({ title: t('adminPanel.applicationDeleted') });
     } catch (error) {
       console.error('Error deleting application:', error);
-      toast({ title: 'Սխալ', description: 'Չհաջողվեց ջնջել դիմումը', variant: 'destructive' });
+      toast({ title: t('adminPanel.toastError'), description: t('adminPanel.applicationDeleteFailed'), variant: 'destructive' });
     }
   };
 
@@ -273,90 +274,79 @@ const Admin = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black pt-32 px-4">
         <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-12">
-          <h1 className="text-4xl font-bold text-white">Ադմինիստրատորի վահանակ</h1>
+          <h1 className="text-4xl font-bold text-white">{t('adminPanel.title')}</h1>
           <Button variant="outline" onClick={handleSignOut}>
-            Դուրս գալ
+            {t('adminPanel.signOut')}
           </Button>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-6 mb-12">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Շտեմարան</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('adminPanel.statsArchive')}</CardTitle>
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.documents}</div>
-              <p className="text-xs text-muted-foreground">PDF ֆայլեր</p>
+              <p className="text-xs text-muted-foreground">{t('adminPanel.statsPdfFiles')}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Օգտատերեր</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('adminPanel.statsUsers')}</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.users}</div>
-              <p className="text-xs text-muted-foreground">Գրանցված օգտատերեր</p>
+              <p className="text-xs text-muted-foreground">{t('adminPanel.statsRegisteredUsers')}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Բլոգ գրառումներ</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('adminPanel.statsBlogPosts')}</CardTitle>
               <PenTool className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.blogPosts}</div>
-              <p className="text-xs text-muted-foreground">Ընդամենը գրառումներ</p>
+              <p className="text-xs text-muted-foreground">{t('adminPanel.statsTotalPosts')}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Հաղորդագրություններ</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('adminPanel.statsMessages')}</CardTitle>
               <MessageSquare className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.messages}</div>
-              <p className="text-xs text-muted-foreground">Ստացված հաղորդագրություններ</p>
+              <p className="text-xs text-muted-foreground">{t('adminPanel.statsMessagesReceived')}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Նորություններ</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('adminPanel.statsNewsletters')}</CardTitle>
               <Mail className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.newsletters}</div>
-              <p className="text-xs text-muted-foreground">Բաժանորդներ</p>
+              <p className="text-xs text-muted-foreground">{t('adminPanel.statsSubscribers')}</p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Հաշվիչներ</CardTitle>
-              <Calculator className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.calculators}</div>
-              <p className="text-xs text-muted-foreground">Ընդամենը հաշվիչներ</p>
-            </CardContent>
-          </Card>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-8">
-            <TabsTrigger value="overview">Ընդհանուր</TabsTrigger>
-            <TabsTrigger value="messages">Հաղորդագրություններ</TabsTrigger>
-            <TabsTrigger value="blog">Բլոգ</TabsTrigger>
-            <TabsTrigger value="documents">Շտեմարան</TabsTrigger>
-            <TabsTrigger value="applications">Դիմումներ</TabsTrigger>
-            <TabsTrigger value="calculators">Հաշվիչներ</TabsTrigger>
-            <TabsTrigger value="users">Օգտատերեր</TabsTrigger>
-            <TabsTrigger value="settings">Կարգավորումներ</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-7">
+            <TabsTrigger value="overview">{t('adminPanel.tabOverview')}</TabsTrigger>
+            <TabsTrigger value="messages">{t('adminPanel.tabMessages')}</TabsTrigger>
+            <TabsTrigger value="blog">{t('adminPanel.tabBlog')}</TabsTrigger>
+            <TabsTrigger value="documents">{t('adminPanel.tabDocuments')}</TabsTrigger>
+            <TabsTrigger value="applications">{t('adminPanel.tabApplications')}</TabsTrigger>
+            <TabsTrigger value="users">{t('adminPanel.tabUsers')}</TabsTrigger>
+            <TabsTrigger value="settings">{t('adminPanel.tabSettings')}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -365,10 +355,10 @@ const Admin = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <PenTool className="h-5 w-5" />
-                    Բլոգի կառավարում
+                    {t('adminPanel.blogManagement')}
                   </CardTitle>
                   <CardDescription>
-                    Ստեղծեք և կառավարեք բլոգի գրառումները
+                    {t('adminPanel.blogManagementDesc')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -376,14 +366,14 @@ const Admin = () => {
                     className="w-full" 
                     onClick={() => navigate('/blog-editor')}
                   >
-                    Նոր գրառում ստեղծել
+                    {t('adminPanel.createNewPost')}
                   </Button>
                   <Button 
                     variant="outline" 
                     className="w-full"
                     onClick={() => navigate('/blog-management')}
                   >
-                    Գրառումների կառավարում
+                    {t('adminPanel.managePosts')}
                   </Button>
                 </CardContent>
               </Card>
@@ -392,10 +382,10 @@ const Admin = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <FileText className="h-5 w-5" />
-                    Շտեմարանի կառավարում
+                    {t('adminPanel.archiveManagement')}
                   </CardTitle>
                   <CardDescription>
-                    Վերբեռնեք և կառավարեք PDF փաստաթղթերը
+                    {t('adminPanel.archiveManagementDesc')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -403,7 +393,7 @@ const Admin = () => {
                     className="w-full"
                     onClick={() => setActiveTab("documents")}
                   >
-                    Ֆայլ վերբեռնել
+                    {t('adminPanel.uploadFile')}
                   </Button>
                 </CardContent>
               </Card>
@@ -412,10 +402,10 @@ const Admin = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <MessageSquare className="h-5 w-5" />
-                    Հաղորդագրություններ
+                    {t('adminPanel.statsMessages')}
                   </CardTitle>
                   <CardDescription>
-                    Դիտեք և պատասխանեք հաղորդագրություններին
+                    {t('adminPanel.messagesDesc')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -423,7 +413,7 @@ const Admin = () => {
                     {/* contactMessages.filter(msg => !msg.is_read).length */}
                   </div>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Չկարդացված հաղորդագրություններ
+                    {t('adminPanel.unreadMessages')}
                   </p>
                 </CardContent>
               </Card>
@@ -432,49 +422,22 @@ const Admin = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <BarChart3 className="h-5 w-5" />
-                    Վիճակագրություն
+                    {t('adminPanel.statistics')}
                   </CardTitle>
                   <CardDescription>
-                    Կայքի գործունեության վիճակագրություն
+                    {t('adminPanel.statisticsDesc')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <span className="text-sm">Ակտիվ փաստաթղթեր:</span>
+                      <span className="text-sm">{t('adminPanel.activeDocuments')}</span>
                       <span className="font-medium">{documents.filter(d => d.is_published).length}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm">Հրապարակված գրառումներ:</span>
+                      <span className="text-sm">{t('adminPanel.publishedPosts')}</span>
                       <span className="font-medium">{blogPosts.filter(d => d.published).length}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm">Ակտիվ հաշվիչներ:</span>
-                      <span className="font-medium">{calculators.filter(c => c.visible).length}</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Calculator className="h-5 w-5" />
-                    Հաշվիչների կառավարում
-                  </CardTitle>
-                  <CardDescription>
-                    Ստեղծեք և կառավարեք հաշվիչները
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <Button 
-                    className="w-full" 
-                    onClick={() => setActiveTab("calculators")}
-                  >
-                    Հաշվիչներ կառավարել
-                  </Button>
-                  <div className="text-sm text-muted-foreground text-center">
-                    Ընդամենը: {stats.calculators} հաշվիչ
                   </div>
                 </CardContent>
               </Card>
@@ -483,10 +446,10 @@ const Admin = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <FileText className="h-5 w-5" />
-                    Դիմումներ դասընթացների համար
+                    {t('adminPanel.courseApplications')}
                   </CardTitle>
                   <CardDescription>
-                    Կառավարեք դիմումները դասընթացների համար
+                    {t('adminPanel.courseApplicationsDesc')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -494,10 +457,10 @@ const Admin = () => {
                     className="w-full" 
                     onClick={() => setActiveTab("applications")}
                   >
-                    Դիմումներ կառավարել
+                    {t('adminPanel.manageApplications')}
                   </Button>
                   <div className="text-sm text-muted-foreground text-center">
-                    Ընդամենը: {courseApplications.length} դիմում
+                    {t('adminPanel.totalApplications')}: {courseApplications.length} {t('adminPanel.applicationCount')}
                   </div>
                 </CardContent>
               </Card>
@@ -510,24 +473,24 @@ const Admin = () => {
 
           <TabsContent value="blog" className="space-y-6">
             <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-white">Բլոգի կառավարում</h2>
+              <h2 className="text-2xl font-bold text-white">{t('adminPanel.blogManagement')}</h2>
               <Button onClick={() => navigate('/blog-editor')}>
-                Նոր գրառում ստեղծել
+                {t('adminPanel.createNewPost')}
               </Button>
             </div>
             
             <Card>
               <CardHeader>
-                <CardTitle>Վերջին գրառումները</CardTitle>
+                <CardTitle>{t('adminPanel.lastPosts')}</CardTitle>
                 <CardDescription>
-                  Վերջերս ստեղծված բլոգի գրառումները
+                  {t('adminPanel.lastPostsDesc')}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {blogPosts.length === 0 ? (
                     <p className="text-center text-muted-foreground py-8">
-                      Գրառումներ չկան
+                      {t('adminPanel.noPosts')}
                     </p>
                   ) : (
                     blogPosts.map((post) => (
@@ -537,7 +500,7 @@ const Admin = () => {
                             <h4 className="font-medium">{post.title}</h4>
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                               <Badge variant={post.published ? "default" : "secondary"}>
-                                {post.published ? "Հրապարակված" : "Սևագիր"}
+                                {post.published ? t('adminPanel.published') : t('adminPanel.draft')}
                               </Badge>
                               <span>{post.category}</span>
                               <span>{new Date(post.created_at).toLocaleDateString('hy-AM')}</span>
@@ -563,13 +526,13 @@ const Admin = () => {
                               variant={post.published ? "secondary" : "default"}
                               onClick={() => toggleBlogPostStatus(post.id, post.published)}
                             >
-                              {post.published ? "Թաքցնել" : "Հրապարակել"}
+                              {post.published ? t('adminPanel.hide') : t('adminPanel.publish')}
                             </Button>
                             <Button
                               size="sm"
                               variant="destructive"
                               onClick={() => handleDeletePost(post.id)}
-                              title="Ջնջել գրառումը"
+                              title={t('adminPanel.deletePost')}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -589,7 +552,7 @@ const Admin = () => {
                       className="w-full"
                       onClick={() => navigate('/blog-management')}
                     >
-                      Բոլոր գրառումները դիտել
+                      {t('adminPanel.viewAllPosts')}
                     </Button>
                   </div>
                 )}
@@ -603,16 +566,16 @@ const Admin = () => {
               
               <Card>
                 <CardHeader>
-                  <CardTitle>Վերջին փաստաթղթերը</CardTitle>
+                  <CardTitle>{t('adminPanel.lastDocuments')}</CardTitle>
                   <CardDescription>
-                    Վերջերս վերբեռնված փաստաթղթերի ցանկ
+                    {t('adminPanel.lastDocumentsDesc')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
                     {documents.length === 0 ? (
                       <p className="text-center text-muted-foreground py-8">
-                        Փաստաթղթեր չկան
+                        {t('adminPanel.noDocuments')}
                       </p>
                     ) : (
                       documents.map((doc) => (
@@ -622,37 +585,25 @@ const Admin = () => {
                               <h4 className="font-medium">{doc.title}</h4>
                               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                 <Badge variant={doc.is_published ? "default" : "secondary"}>
-                                  {doc.is_published ? "Հրապարակված" : "Սևագիր"}
+                                  {doc.is_published ? t('adminPanel.published') : t('adminPanel.draft')}
                                 </Badge>
                                 <span>{doc.category}</span>
                                 <span>{new Date(doc.created_at).toLocaleDateString('hy-AM')}</span>
                               </div>
                             </div>
                             <div className="flex gap-2">
-                              {doc.file_url && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => {
-                                    const url = doc.file_url?.startsWith('http') ? doc.file_url : `http://127.0.0.1:8000${doc.file_url}`;
-                                    window.open(url, '_blank', 'noopener,noreferrer');
-                                  }}
-                                >
-                                  <ExternalLink className="h-4 w-4" />
-                                </Button>
-                              )}
                               <Button
                                 size="sm"
                                 variant={doc.is_published ? "secondary" : "default"}
                                 onClick={() => toggleDocumentStatus(doc.id, doc.is_published)}
                               >
-                                {doc.is_published ? "Թաքցնել" : "Հրապարակել"}
+                                {doc.is_published ? t('adminPanel.hide') : t('adminPanel.publish')}
                               </Button>
                               <Button
                                 size="sm"
                                 variant="destructive"
                                 onClick={() => handleDeleteDocument(doc.id, doc.file_url)}
-                                title="Ջնջել փաստաթուղթը"
+                                title={t('adminPanel.deleteDocument')}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -682,11 +633,6 @@ const Admin = () => {
 
           <TabsContent value="settings" className="space-y-6">
             <SystemSettings />
-          </TabsContent>
-
-          <TabsContent value="calculators" className="space-y-6">
-            <h2 className="text-2xl font-bold text-white">Հաշվիչների կառավարում</h2>
-            <CalculatorsManagement />
           </TabsContent>
         </Tabs>
       </div>

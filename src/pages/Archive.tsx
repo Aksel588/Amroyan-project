@@ -4,11 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { FileText, Download, Eye, ChevronDown, ChevronRight, Folder, Archive as ArchiveIcon, Users } from "lucide-react";
+import { FileText, Download, Eye, ChevronDown, ChevronRight, Folder, Archive as ArchiveIcon } from "lucide-react";
 import { laravelApi } from "@/integrations/laravel/client";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import NetworkAnimation from "@/components/NetworkAnimation";
+import { useLanguage } from "@/contexts/LanguageContext";
 interface Document {
   id: string;
   title: string;
@@ -24,14 +25,12 @@ interface Document {
 const Archive = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-    tax: true,
-    personnel: true,
     database: true
   });
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
+  const { t } = useLanguage();
   useEffect(() => {
     fetchDocuments();
     
@@ -43,34 +42,35 @@ const Archive = () => {
     try {
       // LOGIC: If published show, if not published do not show
       // Only load published documents (is_published: true)
-      const response = await laravelApi.getDocuments({ is_published: true });
+      const response = await laravelApi.getDocuments({ is_published: true, per_page: 200 });
       setDocuments(response.data || []);
     } catch (error: any) {
       toast({
-        title: "Սխալ",
-        description: "Չհաջողվեց բեռնել փաստաթղթերը",
+        title: t('archive.toast.error'),
+        description: t('archive.toast.loadFailed'),
         variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
   };
-  const handleDocumentView = async (doc: Document) => {
+  const handleDocumentDownload = async (doc: Document) => {
+    if (!doc.file_url) return;
     try {
-      // Increment view count
       await laravelApi.incrementDocumentViewCount(doc.id);
-
-      // Open document in new tab
-      if (doc.file_url) {
-        // Ensure the URL is absolute and open in new tab
-        const url = doc.file_url.startsWith('http') ? doc.file_url : `http://127.0.0.1:8000${doc.file_url}`;
-        window.open(url, "_blank", "noopener,noreferrer");
-      }
+      const blob = await laravelApi.downloadDocument(doc.id);
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = doc.file_name || `${doc.title || 'document'}.pdf`;
+      a.click();
+      URL.revokeObjectURL(blobUrl);
+      toast({ title: t('archive.toast.downloaded'), description: t('archive.toast.documentDownloaded') });
     } catch (error: any) {
       toast({
-        title: "Սխալ",
-        description: "Չհաջողվեց բացել փաստաթուղթը",
-        variant: "destructive"
+        title: t('archive.toast.error'),
+        description: error?.message || t('archive.toast.downloadFailed'),
+        variant: 'destructive',
       });
     }
   };
@@ -82,16 +82,9 @@ const Archive = () => {
     return `${mb.toFixed(1)} MB`;
   };
   const getCategoryTitle = (category: string) => {
-    const titles: Record<string, string> = {
-      standards: "Ստանդարտներ",
-      pek_notifications: "ՊԵԿ ծանուցումներ",
-      clarifications_tax: "Հարկային պարզաբանումներ",
-      clarifications_labor: "Աշխատանքային պարզաբանումներ",
-      discussions: "Քննարկումներ",
-      tests_accounting_finance: "Հաշվապահական և ֆինանսական թեստեր",
-      tests_hr: "Մարդկային ռեսուրսների թեստեր"
-    };
-    return titles[category] || category;
+    const key = `archive.categories.${category}`;
+    const translated = t(key);
+    return translated !== key ? translated : category;
   };
   const filterDocumentsByCategory = (prefix: string) => {
     return documents.filter(doc => doc.category.startsWith(prefix));
@@ -137,7 +130,7 @@ const Archive = () => {
                             )}
                             <span className="flex items-center gap-1">
                               <Eye className="w-4 h-4" />
-                              {doc.view_count} դիտում
+                              {doc.view_count} {t('archive.views')}
                             </span>
                           </div>
                         </div>
@@ -147,11 +140,11 @@ const Archive = () => {
                       <Button 
                         size="sm" 
                         className="bg-gold-500 hover:bg-gold-600 text-black font-medium"
-                        onClick={() => handleDocumentView(doc)} 
+                        onClick={() => handleDocumentDownload(doc)} 
                         disabled={!doc.file_url}
                       >
                         <Download className="w-4 h-4 mr-2" />
-                        Բացել →
+                        {t('archive.download')}
                       </Button>
                     </div>
                   </div>
@@ -201,7 +194,7 @@ const Archive = () => {
                           )}
                           <span className="flex items-center gap-1">
                             <Eye className="w-4 h-4" />
-                            {doc.view_count} դիտում
+                            {doc.view_count} {t('archive.views')}
                           </span>
                         </div>
                       </div>
@@ -211,11 +204,11 @@ const Archive = () => {
                     <Button 
                       size="sm" 
                       className="bg-gold-500 hover:bg-gold-600 text-black font-medium"
-                      onClick={() => handleDocumentView(doc)} 
+                      onClick={() => handleDocumentDownload(doc)} 
                       disabled={!doc.file_url}
                     >
                       <Download className="w-4 h-4 mr-2" />
-                      Բացել →
+                      {t('archive.download')}
                     </Button>
                   </div>
                 </div>
@@ -238,7 +231,7 @@ const Archive = () => {
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="max-w-6xl mx-auto text-center">
               <div className="animate-spin w-8 h-8 border-2 border-gold-400 border-t-transparent rounded-full mx-auto"></div>
-              <p className="text-gray-400 mt-4">Բեռնում...</p>
+              <p className="text-gray-400 mt-4">{t('archive.loading')}</p>
             </div>
           </div>
         </section>
@@ -251,10 +244,10 @@ const Archive = () => {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-6xl mx-auto text-center">
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6 sm:mb-8">
-              Շտեմարան
+              {t('archive.heroTitle')}
             </h1>
             <p className="text-lg sm:text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto">
-              Օգտակար փաստաթղթեր և տեղեկատվություն
+              {t('archive.heroSubtitle')}
             </p>
           </div>
         </div>
@@ -263,89 +256,83 @@ const Archive = () => {
       <div className="max-w-6xl mx-auto px-4 pb-20">
 
         {/* Features Section */}
-        <section className="mb-20">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white mb-4">Շտեմարանի բաժիններ</h2>
-            <p className="text-gray-400 text-lg">Արագ մուտք դեպի տարբեր կատեգորիաների փաստաթղթեր</p>
+        <section className="pt-10 mb-20">
+          <div className="text-center mb-14">
+            <h2 className="text-3xl font-bold text-white mb-6 pt-4">{t('archive.sectionsTitle')}</h2>
+            <p className="text-gray-400 text-lg mb-8">{t('archive.sectionsSubtitle')}</p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* 1. ՀՀՄՍ / ՖՀՄՍ */}
-            <Link to="/archive/standards">
-              <Card className="group bg-gradient-to-br from-gray-900/50 to-black border-gold-500/20 hover:border-gold-500/40 transition-all duration-300 hover:scale-105">
-                <CardHeader className="text-center">
-                  <div className="w-12 h-12 bg-gold-500/20 rounded-lg flex items-center justify-center mx-auto mb-4 group-hover:bg-gold-500/30 transition-colors">
-                    <FileText className="w-6 h-6 text-gold-400" />
-                  </div>
-                  <CardTitle className="text-white group-hover:text-gold-400 transition-colors">ՀՀՄՍ / ՖՀՄՍ</CardTitle>
-                  <CardDescription className="text-gray-400">Հայաստանի հաշվապահական միջազգային ստանդարտներ</CardDescription>
-                </CardHeader>
-              </Card>
-            </Link>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-2">
+            {/* 1. Standards */}
+            <Card className="group bg-gradient-to-br from-gray-900/50 to-black border-gold-500/20">
+              <CardHeader className="text-center">
+                <div className="w-12 h-12 bg-gold-500/20 rounded-lg flex items-center justify-center mx-auto mb-4 group-hover:bg-gold-500/30 transition-colors">
+                  <FileText className="w-6 h-6 text-gold-400" />
+                </div>
+                <CardTitle className="text-white transition-colors">{t('archive.sectionCards.standardsTitle')}</CardTitle>
+                <CardDescription className="text-gray-400">{t('archive.sectionCards.standardsDesc')}</CardDescription>
+              </CardHeader>
+            </Card>
 
-            {/* 2. ՊԵԿ իրազեկումներ */}
-            <Link to="/archive/notifications">
-              <Card className="group bg-gradient-to-br from-gray-900/50 to-black border-gold-500/20 hover:border-gold-500/40 transition-all duration-300 hover:scale-105">
-                <CardHeader className="text-center">
-                  <div className="w-12 h-12 bg-gold-500/20 rounded-lg flex items-center justify-center mx-auto mb-4 group-hover:bg-gold-500/30 transition-colors">
-                    <ArchiveIcon className="w-6 h-6 text-gold-400" />
-                  </div>
-                  <CardTitle className="text-white group-hover:text-gold-400 transition-colors">ՊԵԿ իրազեկումներ</CardTitle>
-                  <CardDescription className="text-gray-400">Պետական եկամուտների կոմիտեի ծանուցումներ</CardDescription>
-                </CardHeader>
-              </Card>
-            </Link>
+            {/* 2. PEK */}
+            <Card className="group bg-gradient-to-br from-gray-900/50 to-black border-gold-500/20">
+              <CardHeader className="text-center">
+                <div className="w-12 h-12 bg-gold-500/20 rounded-lg flex items-center justify-center mx-auto mb-4 group-hover:bg-gold-500/30 transition-colors">
+                  <ArchiveIcon className="w-6 h-6 text-gold-400" />
+                </div>
+                <CardTitle className="text-white transition-colors">{t('archive.sectionCards.pekTitle')}</CardTitle>
+                <CardDescription className="text-gray-400">{t('archive.sectionCards.pekDesc')}</CardDescription>
+              </CardHeader>
+            </Card>
 
-            {/* 3. Քննարկումներ */}
-            <Link to="/archive/discussions">
-              <Card className="group bg-gradient-to-br from-gray-900/50 to-black border-gold-500/20 hover:border-gold-500/40 transition-all duration-300 hover:scale-105">
-                <CardHeader className="text-center">
-                  <div className="w-12 h-12 bg-gold-500/20 rounded-lg flex items-center justify-center mx-auto mb-4 group-hover:bg-gold-500/30 transition-colors">
-                    <Folder className="w-6 h-6 text-gold-400" />
-                  </div>
-                  <CardTitle className="text-white group-hover:text-gold-400 transition-colors">Քննարկումներ</CardTitle>
-                  <CardDescription className="text-gray-400">Մասնագիտական քննարկումներ և վերլուծություններ</CardDescription>
-                </CardHeader>
-              </Card>
-            </Link>
+            {/* 3. Discussions */}
+            <Card className="group bg-gradient-to-br from-gray-900/50 to-black border-gold-500/20">
+              <CardHeader className="text-center">
+                <div className="w-12 h-12 bg-gold-500/20 rounded-lg flex items-center justify-center mx-auto mb-4 group-hover:bg-gold-500/30 transition-colors">
+                  <Folder className="w-6 h-6 text-gold-400" />
+                </div>
+                <CardTitle className="text-white transition-colors">{t('archive.sectionCards.discussionsTitle')}</CardTitle>
+                <CardDescription className="text-gray-400">{t('archive.sectionCards.discussionsDesc')}</CardDescription>
+              </CardHeader>
+            </Card>
 
-            {/* 4. Պաշտոնական պարզաբանումներ */}
+            {/* 4. Clarifications */}
             <Card className="group bg-gradient-to-br from-gray-900/50 to-black border-gold-500/20 hover:border-gold-500/40 transition-all duration-300">
               <CardHeader className="text-center">
                 <div className="w-12 h-12 bg-gold-500/20 rounded-lg flex items-center justify-center mx-auto mb-4 group-hover:bg-gold-500/30 transition-colors">
                   <FileText className="w-6 h-6 text-gold-400" />
                 </div>
-                <CardTitle className="text-white group-hover:text-gold-400 transition-colors">Պաշտոնական պարզաբանումներ</CardTitle>
-                <CardDescription className="text-gray-400">Պաշտոնական պարզաբանումներ և մեկնաբանություններ</CardDescription>
+                <CardTitle className="text-white group-hover:text-gold-400 transition-colors">{t('archive.sectionCards.clarificationsTitle')}</CardTitle>
+                <CardDescription className="text-gray-400">{t('archive.sectionCards.clarificationsDesc')}</CardDescription>
               </CardHeader>
               <CardContent className="pt-0">
-                <nav aria-label="Պարզաբանումների ենթակատեգորիաներ" className="space-y-2">
+                <nav aria-label={t('archive.sectionCards.clarificationsAria')} className="space-y-2">
                   <Link to="/archive/clarifications/tax-law" className="block text-gold-400 hover:text-gold-300 transition-colors py-2 px-3 rounded-lg hover:bg-gold-500/10">
-                    Հարկային օրենսդրություն
+                    {t('archive.sectionCards.taxLaw')}
                   </Link>
                   <Link to="/archive/clarifications/labor-law" className="block text-gold-400 hover:text-gold-300 transition-colors py-2 px-3 rounded-lg hover:bg-gold-500/10">
-                    Աշխատանքային օրենսդրություն
+                    {t('archive.sectionCards.laborLaw')}
                   </Link>
                 </nav>
               </CardContent>
             </Card>
 
-            {/* 5. Թեստեր */}
+            {/* 5. Tests */}
             <Card className="group bg-gradient-to-br from-gray-900/50 to-black border-gold-500/20 hover:border-gold-500/40 transition-all duration-300">
               <CardHeader className="text-center">
                 <div className="w-12 h-12 bg-gold-500/20 rounded-lg flex items-center justify-center mx-auto mb-4 group-hover:bg-gold-500/30 transition-colors">
                   <FileText className="w-6 h-6 text-gold-400" />
                 </div>
-                <CardTitle className="text-white group-hover:text-gold-400 transition-colors">Թեստեր</CardTitle>
-                <CardDescription className="text-gray-400">Մասնագիտական թեստեր և ստուգումներ</CardDescription>
+                <CardTitle className="text-white group-hover:text-gold-400 transition-colors">{t('archive.sectionCards.testsTitle')}</CardTitle>
+                <CardDescription className="text-gray-400">{t('archive.sectionCards.testsDesc')}</CardDescription>
               </CardHeader>
               <CardContent className="pt-0">
-                <nav aria-label="Թեստերի ենթակատեգորիաներ" className="space-y-2">
+                <nav aria-label={t('archive.sectionCards.testsAria')} className="space-y-2">
                   <Link to="/archive/tests/accounting" className="block text-gold-400 hover:text-gold-300 transition-colors py-2 px-3 rounded-lg hover:bg-gold-500/10">
-                    Հաշվապահական և ֆինանսկան ոլորտ
+                    {t('archive.sectionCards.testsAccounting')}
                   </Link>
                   <Link to="/archive/tests/hr" className="block text-gold-400 hover:text-gold-300 transition-colors py-2 px-3 rounded-lg hover:bg-gold-500/10">
-                    HR, կադրային ոլորտ
+                    {t('archive.sectionCards.testsHr')}
                   </Link>
                 </nav>
               </CardContent>
@@ -356,69 +343,11 @@ const Archive = () => {
         {/* Documents Section */}
         <section className="mb-20">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white mb-4">Փաստաթղթեր</h2>
-            <p className="text-gray-400 text-lg">Բոլոր հասանելի փաստաթղթերը կատեգորիաների համաձայն</p>
+            <h2 className="text-3xl font-bold text-white mb-4">{t('archive.documentsTitle')}</h2>
+            <p className="text-gray-400 text-lg">{t('archive.documentsSubtitle')}</p>
           </div>
 
           <div className="space-y-8">
-            {/* Հարկային օրենսդրություն */}
-            <Card className="bg-gradient-to-br from-gray-900/50 to-black border-gold-500/20">
-              <Collapsible open={openSections.tax} onOpenChange={() => toggleSection("tax")}>
-                <CollapsibleTrigger asChild>
-                  <CardHeader className="cursor-pointer hover:bg-gold-500/10 transition-colors">
-                    <CardTitle className="flex items-center justify-between text-2xl text-gold-400">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-gold-500/20 rounded-lg flex items-center justify-center">
-                          <FileText className="w-5 h-5" />
-                        </div>
-                        Հարկային օրենսդրություն
-                      </div>
-                      {openSections.tax ? <ChevronDown className="w-6 h-6" /> : <ChevronRight className="w-6 h-6" />}
-                    </CardTitle>
-                    <CardDescription className="text-gray-400">
-                      Հարկային նորմերի և կանոնակարգերի ամբողջական ցանկ
-                    </CardDescription>
-                  </CardHeader>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <CardContent className="space-y-6">
-                    <p className="text-center text-gray-500 py-8">
-                      Փաստաթղթերը տեսնելու համար այցելեք "Շտեմարանի փաստաթղթեր" բաժինը ներքևում
-                    </p>
-                  </CardContent>
-                </CollapsibleContent>
-              </Collapsible>
-            </Card>
-
-            {/* Կադրային օրենսդրություն */}
-            <Card className="bg-gradient-to-br from-gray-900/50 to-black border-gold-500/20">
-              <Collapsible open={openSections.personnel} onOpenChange={() => toggleSection("personnel")}>
-                <CollapsibleTrigger asChild>
-                  <CardHeader className="cursor-pointer hover:bg-gold-500/10 transition-colors">
-                    <CardTitle className="flex items-center justify-between text-2xl text-gold-400">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-gold-500/20 rounded-lg flex items-center justify-center">
-                          <Users className="w-5 h-5" />
-                        </div>
-                        Կադրային օրենսդրություն
-                      </div>
-                      {openSections.personnel ? <ChevronDown className="w-6 h-6" /> : <ChevronRight className="w-6 h-6" />}
-                    </CardTitle>
-                    <CardDescription className="text-gray-400">
-                      Աշխատանքային հարաբերությունների կարգավորման նորմեր
-                    </CardDescription>
-                  </CardHeader>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <CardContent className="space-y-6">
-                    <p className="text-center text-gray-500 py-8">
-                      Փաստաթղթերը տեսնելու համար այցելեք "Շտեմարանի փաստաթղթեր" բաժինը ներքևում
-                    </p>
-                  </CardContent>
-                </CollapsibleContent>
-              </Collapsible>
-            </Card>
-
             {/* Database Documents */}
             <Card className="bg-gradient-to-br from-gray-900/50 to-black border-gold-500/20">
               <Collapsible open={openSections.database} onOpenChange={() => toggleSection("database")}>
@@ -429,30 +358,69 @@ const Archive = () => {
                         <div className="w-8 h-8 bg-gold-500/20 rounded-lg flex items-center justify-center">
                           <ArchiveIcon className="w-5 h-5" />
                         </div>
-                        Շտեմարանի փաստաթղթեր
+                        {t('archive.warehouseTitle')}
                       </div>
                       {openSections.database ? <ChevronDown className="w-6 h-6" /> : <ChevronRight className="w-6 h-6" />}
                     </CardTitle>
                     <CardDescription className="text-gray-400">
-                      Բազայից բեռնված փաստաթղթեր ըստ կատեգորիաների
+                      {t('archive.warehouseSubtitle')}
                     </CardDescription>
                   </CardHeader>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                   <CardContent className="space-y-6">
+                    {/* Document list from database by category */}
                     {documents.length === 0 ? (
-                      <div className="text-center py-12">
-                        <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                          <FileText className="w-8 h-8 text-gray-500" />
-                        </div>
-                        <p className="text-gray-500 text-lg">Դեռ փաստաթղթեր չեն ավելացվել շտեմարանում</p>
-                      </div>
+                      <p className="text-center text-gray-500 py-8">
+                        {t('archive.noDocuments')}
+                      </p>
                     ) : (
-                      // Get unique categories from documents and render them
-                      Array.from(new Set(documents.map(doc => doc.category)))
-                        .sort()
-                        .map(category => renderDocumentsByCategory(category))
+                      <div className="space-y-8">
+                        {Array.from(new Set(documents.map(d => d.category)))
+                          .sort()
+                          .map(cat => renderDocumentsByCategory(cat))}
+                      </div>
                     )}
+                    <div className="flex flex-col items-center justify-center pt-4 border-t border-gold-500/20">
+                      <Button
+                        size="lg"
+                        className="bg-gold-500 hover:bg-gold-600 text-black font-medium"
+                        disabled={downloadingPdf}
+                        onClick={async () => {
+                          setDownloadingPdf(true);
+                          try {
+                            const blob = await laravelApi.downloadWarehousePdf();
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement("a");
+                            a.href = url;
+                            a.download = "warehouse-documents.pdf";
+                            a.click();
+                            URL.revokeObjectURL(url);
+                            toast({ title: t('archive.toast.downloaded'), description: t('archive.toast.pdfDownloaded') });
+                          } catch (e: any) {
+                            toast({
+                              title: t('archive.toast.error'),
+                              description: e?.message || t('archive.toast.pdfFailed'),
+                              variant: "destructive",
+                            });
+                          } finally {
+                            setDownloadingPdf(false);
+                          }
+                        }}
+                      >
+                        {downloadingPdf ? (
+                          <>
+                            <span className="animate-spin w-5 h-5 border-2 border-black border-t-transparent rounded-full mr-2" />
+                            {t('archive.downloadPdfLoading')}
+                          </>
+                        ) : (
+                          <>
+                            <Download className="w-5 h-5 mr-2" />
+                            {t('archive.downloadPdf')}
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </CardContent>
                 </CollapsibleContent>
               </Collapsible>

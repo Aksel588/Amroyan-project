@@ -17,7 +17,8 @@ class CalculatorSeeder extends Seeder
             [
                 'title' => 'Աշխատավարձի հաշվիչ',
                 'slug' => 'salary',
-                'description' => 'Հաշվեք գրանցված ↔ մաքուր աշխատավարձը՝ հաշվի առնելով եկամտային հարկը, կուտակային վճարներն ու դրոշմանիշային վճարը',
+                // Source: cal.xlsx (Лист1)
+                'description' => "Աշխատավարձի հաշվիչը հնարավորություն է տալիս պարզ և մատչելի կերպով հաշվարկել աշխատավարձի չափը, հարկերը և այլ վճարների չափերը։\nՀաշվիչի միջոցով կարելի է հաշվարկել և՛ մաքուր աշխատավարձը (հարկերից հետո)՝ նշելով գրանցված աշխատավարձի չափը, և՛ գրանցված աշխատավարձը (մինչ հարկումը)՝ նշելով մաքուր աշխատավարձը։\n2023թ.-ի հունվարի 1-ից եկամտային հարկի դրույքաչափը կազմում է 20%։",
                 'icon_name' => 'Calculator',
                 'sort_order' => 1,
                 'visible' => true,
@@ -47,9 +48,10 @@ class CalculatorSeeder extends Seeder
                 'visible' => true,
             ],
             [
-                'title' => 'Նախագծային հաշվիչ',
+                // Source: cal.xlsx (նախագծերի հաշվիչ)
+                'title' => 'ՆԱԽԱԳԾԵՐԻ ՀԱՇՎԻՉ (смета)',
                 'slug' => 'estimate',
-                'description' => 'Հաշվեք նախագծերի արժեքը և գնահատումները',
+                'description' => 'Հաշվիչը հնարավորություն է տալիս հաշվարկել տարբեր ծառայությունների, աշխատանքների և պրոյեկտների բյուջեն, և օգտակար կլինի ինչպես պատվիրատուների, այնպես էլ կատարողների համար: Նախագծի արժեքը հաշվարկելու համար լրացրեք աշխատավարձային մասը (հաստիքների զուտ արժեքները), այլ ծախսային հոդվածները, նշեք կազմակերպության շահույթը (маржа) և Կատարողի ԱԱՀ վճարող լինելը կամ ոչ:',
                 'icon_name' => 'Calculator',
                 'sort_order' => 5,
                 'visible' => true,
@@ -65,7 +67,8 @@ class CalculatorSeeder extends Seeder
             [
                 'title' => 'Շրջանառության հարկի հաշվիչ',
                 'slug' => 'turnover-tax',
-                'description' => 'Հաշվեք եռամսյակային շրջանառության հարկը՝ տարբեր գործունեության տեսակների համար՝ հանելով ծախսերը և ստուգելով նվազագույն հարկը',
+                // Source: cal.xlsx (շրջհարկի հաշվիչ)
+                'description' => 'Շրջանառության հարկի հաշվիչը հնարավորություն է տալիս հաշվարկել կազմակերպության կամ ԱՁ-ի եռամսյակային շրջանառության հարկը: Տող 1-5 համար լրացվում է շրջանառության ծավալը, գործունեության հետ անմիջականորեն կապ ունեցող ծախս (ինքնարժեք), իրացման, վարչական և այլ ծախսերը, որից հետո հաշվիչը ավտոմատ կերպով հաշվարկում է հարկի փաստացի տոկոսը և վճարման ենթակա հարկը: Տող 6-11 համար լրացվում է միայն շրջանառության ծավալը, գործունեության հարկի դրույքաչափը ֆիքսված է:',
                 'icon_name' => 'Calculator',
                 'sort_order' => 7,
                 'visible' => true,
@@ -73,7 +76,10 @@ class CalculatorSeeder extends Seeder
         ];
 
         foreach ($calculators as $calculatorData) {
-            $calculator = Calculator::create($calculatorData);
+            $calculator = Calculator::updateOrCreate(
+                ['slug' => $calculatorData['slug']],
+                $calculatorData
+            );
 
             // Add default rates for salary calculator
             if ($calculator->slug === 'salary') {
@@ -99,10 +105,16 @@ class CalculatorSeeder extends Seeder
                 ];
 
                 foreach ($rates as $rateData) {
-                    CalculatorRate::create([
-                        'calculator_id' => $calculator->id,
-                        ...$rateData,
-                    ]);
+                    CalculatorRate::updateOrCreate(
+                        [
+                            'calculator_id' => $calculator->id,
+                            'label' => $rateData['label'],
+                        ],
+                        [
+                            'calculator_id' => $calculator->id,
+                            ...$rateData,
+                        ]
+                    );
                 }
             }
 
@@ -124,10 +136,16 @@ class CalculatorSeeder extends Seeder
                 ];
 
                 foreach ($rates as $rateData) {
-                    CalculatorRate::create([
-                        'calculator_id' => $calculator->id,
-                        ...$rateData,
-                    ]);
+                    CalculatorRate::updateOrCreate(
+                        [
+                            'calculator_id' => $calculator->id,
+                            'label' => $rateData['label'],
+                        ],
+                        [
+                            'calculator_id' => $calculator->id,
+                            ...$rateData,
+                        ]
+                    );
                 }
             }
         }

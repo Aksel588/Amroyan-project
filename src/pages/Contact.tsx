@@ -20,30 +20,10 @@ const Contact = () => {
   });
 
   const contactInfo = [
-    {
-      icon: Phone,
-      title: 'Հեռախոս',
-      content: '+374 55 51 71 31',
-      description: 'WhatsApp, Telegram հասանելի'
-    },
-    {
-      icon: Mail,
-      title: 'Էլ. հասցե',
-      content: 'amroyanconsulting@gmail.com',
-      description: 'Կպատասխանենք 24 ժամվա ընթացքում'
-    },
-    {
-      icon: MapPin,
-      title: 'Հասցե',
-      content: 'ք․ Երևան, Փիրումյանների 10, 3-րդ հարկ',
-      description: 'Կենտրոնական գրասենյակ'
-    },
-    {
-      icon: MapPin,
-      title: 'Փոստային հասցե',
-      content: '0008, ք․Երևան, Մուրացանի 69',
-      description: 'Փաստաթղթերի ուղարկման համար'
-    }
+    { icon: Phone, titleKey: 'phone', content: '+374 55 51 71 31', descKey: 'phoneDesc' },
+    { icon: Mail, titleKey: 'email', content: 'amroyanconsulting@gmail.com', descKey: 'emailDesc' },
+    { icon: MapPin, titleKey: 'address', contentKey: 'addressValue', descKey: 'addressDesc' },
+    { icon: MapPin, titleKey: 'postal', contentKey: 'postalValue', descKey: 'postalDesc' }
   ];
 
   const servicesData = t('services.list');
@@ -65,7 +45,7 @@ const Contact = () => {
       const apiData = {
         name: formData.name,
         email: formData.email,
-        subject: formData.company || 'Հետադարձ կապ',
+        subject: formData.company || t('contact.form.defaultSubject'),
         message: formData.message,
         phone: formData.phone,
         service: formData.service
@@ -74,8 +54,8 @@ const Contact = () => {
       await laravelApi.createContactMessage(apiData);
 
       toast({
-        title: "Հաջողություն",
-        description: "Ձեր հաղորդագրությունը հաջողությամբ ուղարկվեց: Մեր մասնագետները կկապվեն ձեզ հետ:"
+        title: t('contact.toast.success'),
+        description: t('contact.toast.messageSent')
       });
 
       // Reset form
@@ -91,8 +71,8 @@ const Contact = () => {
     } catch (error) {
       console.error('Error sending message:', error);
       toast({
-        title: "Սխալ",
-        description: "Չհաջողվեց ուղարկել հաղորդագրությունը: Խնդրում ենք փորձել կրկին:",
+        title: t('contact.toast.error'),
+        description: t('contact.toast.sendFailed'),
         variant: "destructive"
       });
     } finally {
@@ -127,13 +107,13 @@ const Contact = () => {
                     <info.icon size={28} className="text-black sm:w-8 sm:h-8" />
                   </div>
                   <h3 className="text-lg sm:text-xl font-semibold text-white mb-2">
-                    {info.title}
+                    {t(`contact.info.${info.titleKey}`)}
                   </h3>
                   <p className="text-sm sm:text-base text-gold-400 font-medium mb-2">
-                    {info.content}
+                    {'contentKey' in info && info.contentKey ? t(`contact.info.${info.contentKey}`) : info.content}
                   </p>
                   <p className="text-xs sm:text-sm text-gray-400">
-                    {info.description}
+                    {t(`contact.info.${info.descKey}`)}
                   </p>
                 </CardContent>
               </Card>
@@ -259,7 +239,7 @@ const Contact = () => {
                       className="bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-black font-semibold px-8 sm:px-12 py-3 sm:py-4 text-base sm:text-lg min-h-[48px] w-full sm:w-auto"
                       disabled={loading}
                     >
-                      {loading ? 'Ուղարկում...' : t('contact.form.submit')} <Send size={18} className="ml-2 sm:w-5 sm:h-5" />
+                      {loading ? t('contact.form.submitting') : t('contact.form.submit')} <Send size={18} className="ml-2 sm:w-5 sm:h-5" />
                     </Button>
                   </div>
                 </form>
@@ -275,10 +255,10 @@ const Contact = () => {
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-8 sm:mb-12">
               <h2 className="text-3xl sm:text-4xl font-bold mb-4 sm:mb-6">
-                <span className="gradient-text">Մեր գտնվելու վայրը</span>
+                <span className="gradient-text">{t('contact.mapTitle')}</span>
               </h2>
               <p className="text-lg sm:text-xl text-gray-300 px-4">
-                Այցելեք մեր գրասենյակ կամ նշանակեք հանդիպում
+                {t('contact.mapSubtitle')}
               </p>
             </div>
 
@@ -287,8 +267,8 @@ const Contact = () => {
                 <div className="text-center">
                   <MapPin size={48} className="text-gold-400 mx-auto mb-4 sm:w-16 sm:h-16" />
                   <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">Amroyan Consulting</h3>
-                  <p className="text-sm sm:text-base text-gray-300">Երևան, Հայաստան</p>
-                  <p className="text-xs sm:text-sm text-gray-400 mt-2 px-4">Ճշգրիտ հասցեն կտրամադրվի հանդիպման ժամանակ</p>
+                  <p className="text-sm sm:text-base text-gray-300">{t('contact.mapCity')}</p>
+                  <p className="text-xs sm:text-sm text-gray-400 mt-2 px-4">{t('contact.mapAddressNote')}</p>
                 </div>
               </div>
             </Card>
@@ -300,10 +280,10 @@ const Contact = () => {
       <section className="py-12 sm:py-16 lg:py-20 bg-black">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl sm:text-4xl font-bold mb-4 sm:mb-6">
-            <span className="gradient-text">Պատրա՞ստ եք սկսելու</span>
+            <span className="gradient-text">{t('contact.ctaTitle')}</span>
           </h2>
           <p className="text-lg sm:text-xl text-gray-300 mb-6 sm:mb-8 max-w-2xl mx-auto px-4">
-            Մի՛ սպասեք: Կապվեք մեզ հետ այսօր և ստացեք պրոֆեսիոնալ խորհրդատվություն
+            {t('contact.ctaSubtitle')}
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md sm:max-w-none mx-auto">
@@ -313,7 +293,7 @@ const Contact = () => {
               onClick={() => window.open('tel:+37455517131')}
             >
               <Phone size={18} className="mr-2 sm:w-5 sm:h-5" />
-              Զանգահարել
+              {t('contact.call')}
             </Button>
             
             <Button 
@@ -323,7 +303,7 @@ const Contact = () => {
               onClick={() => window.open('mailto:amroyanconsulting@gmail.com')}
             >
               <Mail size={18} className="mr-2 sm:w-5 sm:h-5" />
-              Գրել նամակ
+              {t('contact.writeEmail')}
             </Button>
           </div>
         </div>

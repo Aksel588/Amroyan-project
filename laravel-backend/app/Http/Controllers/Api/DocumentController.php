@@ -130,4 +130,28 @@ class DocumentController extends Controller
             'view_count' => $document->fresh()->view_count
         ]);
     }
+
+    /**
+     * Stream document file for download (avoids CORS by proxying through API).
+     */
+    public function download($id)
+    {
+        $document = Document::findOrFail($id);
+        if (!$document->is_published) {
+            abort(404);
+        }
+        $urlPath = parse_url($document->file_url, PHP_URL_PATH);
+        if (!$urlPath || strpos($urlPath, '/storage/') !== 0) {
+            abort(404);
+        }
+        $relativePath = ltrim(str_replace('/storage', '', $urlPath), '/');
+        $localPath = storage_path('app/public/' . $relativePath);
+        if (!is_file($localPath)) {
+            abort(404);
+        }
+        $filename = $document->file_name ?: basename($localPath);
+        return response()->download($localPath, $filename, [
+            'Content-Type' => $document->mime_type ?? 'application/pdf',
+        ]);
+    }
 }

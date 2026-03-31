@@ -43,6 +43,10 @@ import Login from "./pages/Login";
 
 const queryClient = new QueryClient();
 
+/** Must match Vite `base` (e.g. subfolder deploy: VITE_BASE_URL=/myapp/) */
+const routerBasename =
+  import.meta.env.BASE_URL.replace(/\/$/, "") || undefined;
+
 const App = () => {
   const [loading, setLoading] = useState(true);
 
@@ -64,7 +68,7 @@ const App = () => {
         <LanguageProvider>
           <Toaster />
           <Sonner />
-          <BrowserRouter>
+          <BrowserRouter basename={routerBasename}>
             <div className="min-h-screen bg-black">
               <Header />
               <Routes>

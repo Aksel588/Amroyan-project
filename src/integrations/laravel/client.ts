@@ -57,7 +57,12 @@ class LaravelApiClient {
         }
         
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        let msg = errorData.message;
+        if (errorData.errors && typeof errorData.errors === "object") {
+          const first = Object.values(errorData.errors).flat()[0] as string | undefined;
+          if (first) msg = first;
+        }
+        throw new Error(msg || `HTTP error! status: ${response.status}`);
       }
 
       return await response.json();
@@ -104,6 +109,19 @@ class LaravelApiClient {
 
   async getCurrentUser() {
     return await this.request('/auth/user');
+  }
+
+  /** Update logged-in user email and/or password (requires current_password if email or password changes). */
+  async updateProfile(body: {
+    email: string;
+    current_password?: string;
+    password?: string;
+    password_confirmation?: string;
+  }) {
+    return await this.request('/auth/profile', {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    });
   }
 
   // Blog methods

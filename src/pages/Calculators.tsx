@@ -50,14 +50,33 @@ const Calculators = () => {
         console.log('Calculators data:', data);
         
         const apiItems = data
-          .map((d: any) => ({
-            title: d.title,
-            to: `/calculators/${d.slug}`,
-            icon_name: d.icon_name || 'Calculator',
-            desc: d.description || '',
-            category: d.category || 'general',
-            tags: d.tags || []
-          }))
+          .map((d: any) => {
+            const slug = d.slug || '';
+            const to = `/calculators/${slug}`;
+            let title = d.title || '';
+            let desc = d.description || '';
+
+            // Keep core tax calculator cards consistent even if admin content is mismatched.
+            if (slug === 'profit-tax') {
+              title = 'Շահութահարկի հաշվիչ';
+              if (!desc) desc = 'Հաշվեք շահութահարկը ձեր շահույթի համար';
+            }
+            if (slug === 'armenian-tax') {
+              title = 'Շահութահարկի հաշվիչ';
+              if (!desc) {
+                desc = 'Հաշվեք շահութահարկը՝ եկամուտներ, ծախսեր, կորուստներ, նվազեցումներ և հարկվող շահույթ՝ 79 տողի ամբողջական հարկային աղյուսակով';
+              }
+            }
+
+            return {
+              title,
+              to,
+              icon_name: d.icon_name || 'Calculator',
+              desc,
+              category: d.category || 'general',
+              tags: d.tags || []
+            };
+          })
           .filter((item: { to: string }) => item.to !== '/calculators/comprehensive-salary' && item.to !== '/calculators/armenian-payroll');
         console.log('Processed items:', apiItems);
         setItems(apiItems);
@@ -74,7 +93,7 @@ const Calculators = () => {
             tags: ['աշխատավարձ', 'հարկ', 'կուտակային', 'դրոշմանիշ']
           },
           {
-            title: 'ՆԱԽԱԳԾԵՐԻ ՀԱՇՎԻՉ',
+            title: 'Նախագծերի հաշվիչ',
             to: '/calculators/estimate',
             icon_name: 'Calculator',
             desc: 'Հաշվիչը հնարավորություն է տալիս հաշվարկել տարբեր ծառայությունների, աշխատանքների և պրոյեկտների բյուջեն՝ ինչպես պատվիրատուների, այնպես էլ կատարողների համար։',
@@ -82,10 +101,10 @@ const Calculators = () => {
             tags: ['նախագիծ', 'արժեք', 'գնահատում', 'սմետա']
           },
           {
-            title: 'Շրջանառության հարկի հաշվիչ',
+            title: 'Շրջհարկի հաշվիչ',
             to: '/calculators/turnover-tax',
             icon_name: 'Calculator',
-            desc: 'Շրջանառության հարկի հաշվիչը հնարավորություն է տալիս հաշվարկել կազմակերպության կամ ԱՁ-ի եռամսյակային շրջանառության հարկը՝ ըստ գործունեության տեսակի։',
+            desc: 'Շրջանառության հարկի հաշվիչը հնարավորություն է տալիս հաշվարկել կազմակերպության կամ ԱՁ-ի եռամսյակային շրջանառության հարկը: Տող 1-5 համար լրացվում է շրջանառության ծավալը, գործունեության հետ անմիջականորեն կապ ունեցող ծախս (ինքնարժեք) ...',
             category: 'tax',
             tags: ['շրջանառություն', 'հարկ', 'եռամսյակ', 'գործունեություն']
           },
@@ -95,7 +114,7 @@ const Calculators = () => {
             icon_name: 'Calculator',
             desc: 'Հաշվեք շահութահարկը՝ եկամուտներ, ծախսեր, կորուստներ, նվազեցումներ և հարկվող շահույթ՝ 79 տողի ամբողջական հարկային աղյուսակով',
             category: 'tax',
-            tags: ['շահութահարկ', 'հարկային', 'եկամուտ', 'ծախս', 'կորուստ']
+            tags: ['հայաստան', 'հարկային', 'շահութահարկ', 'եկամուտ', 'ծախս']
           },
           {
             title: 'Նպաստի հաշվիչ',

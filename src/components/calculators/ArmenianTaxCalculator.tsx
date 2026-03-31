@@ -356,7 +356,7 @@ const ArmenianTaxCalculator = () => {
         <CardHeader>
           <CardTitle className="gradient-text text-2xl flex items-center gap-2">
             <FileText className="w-6 h-6" />
-            Հայաստանի հարկային հաշվիչ
+            Շահութահարկի հաշվիչ
           </CardTitle>
           <CardDescription className="text-gray-400">
             Հաշվեք շահութահարկը՝ եկամուտներ, ծախսեր, կորուստներ, նվազեցումներ և հարկվող շահույթ

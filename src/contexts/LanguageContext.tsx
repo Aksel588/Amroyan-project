@@ -430,7 +430,7 @@ const translations = {
       heroTitle: 'Ֆինանսական հաշվիչներ',
       heroSubtitle: 'Պրոֆեսիոնալ գործիքներ ձեր բիզնեսի ֆինանսական հաշվարկների համար',
       stats: [
-        { number: '8+', label: 'հաշվիչներ' },
+        { number: '4+', label: 'հաշվիչներ' },
         { number: '100%', label: 'ճշգրտություն' },
         { number: '24/7', label: 'մատչելիություն' },
         { number: '0', label: 'ծախս' }
@@ -848,7 +848,7 @@ const translations = {
       heroTitle: 'Финансовые калькуляторы',
       heroSubtitle: 'Профессиональные инструменты для финансовых расчетов вашего бизнеса',
       stats: [
-        { number: '8+', label: 'калькуляторов' },
+        { number: '4+', label: 'калькуляторов' },
         { number: '100%', label: 'точность' },
         { number: '24/7', label: 'доступность' },
         { number: '0', label: 'затрат' }
@@ -1266,7 +1266,7 @@ const translations = {
       heroTitle: 'Financial calculators',
       heroSubtitle: 'Professional tools for your business financial calculations',
       stats: [
-        { number: '8+', label: 'calculators' },
+        { number: '4+', label: 'calculators' },
         { number: '100%', label: 'accuracy' },
         { number: '24/7', label: 'availability' },
         { number: '0', label: 'cost' }

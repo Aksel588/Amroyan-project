@@ -12,6 +12,12 @@ On your computer, in the project root:
 npm run build
 ```
 
+For cPanel, prefer (includes SPA `.htaccess` + no-cache for `index.html`):
+
+```bash
+npm run build:cpanel
+```
+
 This creates the `dist/` folder with `index.html` and `assets/`.
 
 ---
@@ -40,6 +46,48 @@ The repo already has a `dist/.htaccess` so that after upload, SPA routing works 
   RewriteRule . /index.html [L]
 </IfModule>
 ```
+
+**Recommended:** use `deploy/cpanel-public-html.htaccess` from this repo — it adds **no-cache headers for `index.html`** so after you upload a new build, visitors get the new HTML (and new `assets/index-xxxxx.js` links) instead of a cached old page.
+
+---
+
+## 2b. Main page still looks old after upload — checklist
+
+1. **Upload the *inside* of `dist/`, not a subfolder**  
+   Wrong: `public_html/dist/index.html` → site only updates at `yoursite.com/dist/`.  
+   Right: `public_html/index.html` and `public_html/assets/` at the **document root** of the domain.
+
+2. **Overwrite old files**  
+   In File Manager, upload and choose **replace** for `index.html` and the whole `assets/` folder. If you skip `index.html`, the browser may keep loading old JS file names.
+
+3. **Hard refresh / cache**  
+   Try **Ctrl+Shift+R** (Windows) or **Cmd+Shift+R** (Mac), or an incognito window.  
+   If you use **Cloudflare**, run **Purge Everything** (Caching).
+
+4. **Homepage content from the API**  
+   The main page loads blog/documents from Laravel. If only the **frontend** changed, that’s enough. If **data** should change, update it in admin/API — the live site uses `VITE_LARAVEL_API_URL` from **when you ran `npm run build`**. Rebuild after changing `.env`, then upload `dist/` again.
+
+5. **`.htaccess` after each build**  
+   `npm run build` may clear `dist/`. Copy `deploy/cpanel-public-html.htaccess` → `dist/.htaccess` before upload, or keep one copy in `public_html` and don’t delete it when uploading.
+
+---
+
+## 2c. Error: MIME type "text/html" for `.js` (module script failed)
+
+The browser asked for a **JavaScript file** (e.g. `/assets/index-xxxxx.js`) but the server sent **HTML** (usually `index.html`). Typical causes:
+
+| Cause | Fix |
+|--------|-----|
+| **`assets/` folder missing or wrong place** | `index.html` references `/assets/...`. Upload the whole **`assets`** folder next to `index.html` in the **same** document root. |
+| **Site is in a subfolder** (`yoursite.com/something/`) but build uses root paths | In `.env.production`: `VITE_BASE_URL=/something/` (trailing slash). Run `npm run build:cpanel` and upload `dist/`. Edit `.htaccess` in that folder: set `RewriteBase /something/` and change the SPA line to `RewriteRule . /something/index.html [L]`. |
+| **SPA rewrite catches `.js` requests** | Use the repo’s `deploy/cpanel-public-html.htaccess` (also copied by `npm run build:cpanel`). It skips rewrite for `/assets/` and common static extensions so missing files return **404** instead of HTML. |
+
+After fixing, hard-refresh (Ctrl+Shift+R) or use a private window.
+
+### Same document root: SPA + Laravel (`/api/index.php`)
+
+If **React and Laravel** both live under `public_html` and API hits `yoursite.com/api/...`, use a **combined** `.htaccess` (Sanctum + API + storage + SPA) — see **`deploy/cpanel-spa-and-laravel-same-root.htaccess`**.  
+Important: use **`RewriteRule . index.html [L]`** for the SPA fallback, not **`RewriteRule ^ index.html`** (the lone `^` pattern is unreliable for all routes).
 
 ---
 
@@ -73,19 +121,93 @@ The repo already has a `dist/.htaccess` so that after upload, SPA routing works 
 
 ---
 
-## 4. Environment variables
+## 4. Connect the React site to Laravel (API URL + CORS)
 
-- **Frontend:** If the API URL on production is different, set `VITE_LARAVEL_API_URL` in `.env` (e.g. `VITE_LARAVEL_API_URL=https://amroyancons.am/api`), then run `npm run build` again and re-upload the new `dist/` contents.
-- **Backend:** In Laravel’s `.env` set at least: `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL`, and correct `DB_*` for the cPanel MySQL database.
+The browser calls the API using the URL baked into the build (`VITE_LARAVEL_API_URL`). Laravel must allow your **website’s origin** in CORS.
+
+### Step A — Frontend (before `npm run build`)
+
+1. In the **project root** (same folder as `package.json`), create or edit **`.env`**:
+
+   ```env
+   VITE_LARAVEL_API_URL=https://YOUR-DOMAIN.com/api
+   ```
+
+   Examples:
+
+   - Same domain, API under `/api`: `https://amroyancons.am/api`
+   - API on subdomain: `https://api.amroyancons.am` (no `/api` if your Laravel routes are at the root of that subdomain)
+
+2. Run:
+
+   ```bash
+   npm run build
+   ```
+
+3. Upload **everything inside `dist/`** again to `public_html` (or your site root).
+
+If you skip this, the app uses the fallback in `src/integrations/laravel/client.ts` (`https://amroyancons.am/api` by default).
+
+### Step B — Laravel CORS (so the browser is allowed to call the API)
+
+Your site runs on e.g. `https://amroyancons.am` but `laravel-backend/config/cors.php` only lists `localhost`. **Add your production domain** to `allowed_origins`:
+
+```php
+'allowed_origins' => [
+    'http://localhost:5173',
+    'http://localhost:8080',
+    // ... other localhost entries ...
+    'https://amroyancons.am',
+    'https://www.amroyancons.am',
+],
+```
+
+Or use a pattern if you prefer. Then upload the updated `config/cors.php` (or set via env if you customize config to read from `.env`).
+
+### Step C — Laravel `.env` (server)
+
+```env
+APP_URL=https://YOUR-DOMAIN.com
+# or if API is on subdomain:
+# APP_URL=https://api.amroyancons.am
+
+APP_ENV=production
+APP_DEBUG=false
+
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=cpanel_db_name
+DB_USERNAME=cpanel_db_user
+DB_PASSWORD=cpanel_db_password
+```
+
+Create the database and user in **cPanel → MySQL® Databases**, then match names here.
+
+### Step D — API route prefix
+
+Laravel `routes/api.php` is usually served under **`/api`** when the web server points to `public/` and `RouteServiceProvider` (or bootstrap) prefixes API routes. Confirm in the browser:
+
+`https://YOUR-DOMAIN.com/api/health` or any existing route (e.g. `/api/calculators`).
+
+The value of `VITE_LARAVEL_API_URL` must be exactly that base (with **no** trailing slash), e.g. `https://amroyancons.am/api`.
 
 ---
 
-## 5. Quick checklist
+## 5. Environment variables (summary)
+
+- **Frontend:** `VITE_LARAVEL_API_URL` in project `.env` → `npm run build` → upload `dist/`.
+- **Backend:** Laravel `.env`: `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL`, `DB_*`.
+
+---
+
+## 6. Quick checklist
 
 - [ ] Run `npm run build` and upload **contents of `dist/`** to the site’s document root (e.g. public_html).
 - [ ] Ensure **.htaccess** is present in that root so SPA routes work.
 - [ ] Upload **Laravel** outside public_html; point the API (subdomain or `/api`) to **laravel-backend/public**.
 - [ ] Configure Laravel **.env** and run **migrate**, **storage:link**.
 - [ ] Set **VITE_LARAVEL_API_URL** (if needed), rebuild, and re-upload frontend.
+- [ ] Add production site URL(s) to **Laravel `config/cors.php`** `allowed_origins`.
 
 If you tell me your exact domain and whether the API will be on a subdomain or under `/api`, I can give you the exact paths and a minimal `.env` example for both frontend and backend.

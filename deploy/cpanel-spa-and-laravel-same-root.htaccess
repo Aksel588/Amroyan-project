@@ -1,0 +1,49 @@
+# Use when React (Vite) and Laravel share ONE document root (e.g. public_html):
+#   - index.html + assets/  = SPA
+#   - /api/*, /sanctum/*, /storage/*  = Laravel via api/index.php (your cPanel layout)
+#
+# REQUIREMENT: Laravel's front controller must exist at: public_html/api/index.php
+# (or adjust paths below). This project usually calls the API with Bearer tokens;
+# Sanctum rules still help if you add cookie-based auth later.
+
+# MIME (optional; wrong MIME is usually HTML served instead of JS — fix paths + rules below)
+<IfModule mod_mime.c>
+  AddType application/javascript js mjs
+  AddType text/css css
+</IfModule>
+
+<IfModule mod_headers.c>
+  <Files "index.html">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+  </Files>
+  SetEnvIf THE_REQUEST "^\s*GET\s+/\s+HTTP" no_cache_root
+  Header set Cache-Control "no-cache, no-store, must-revalidate" env=no_cache_root
+  Header set Pragma "no-cache" env=no_cache_root
+  Header set Expires "0" env=no_cache_root
+</IfModule>
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  # If the site is in a subfolder, set e.g. RewriteBase /myapp/
+  RewriteBase /
+
+  # --- Laravel (before SPA fallback) ---
+  RewriteRule ^sanctum/(.*)$ api/index.php [L]
+  RewriteRule ^api(/.*)?$ api/index.php [L,QSA]
+  RewriteRule ^storage/(.*)$ api/index.php [L]
+
+  # --- Do NOT rewrite real static files to index.html (prevents JS MIME = text/html) ---
+  RewriteCond %{REQUEST_URI} (^|/)(assets|lovable-uploads)/ [NC]
+  RewriteRule ^ - [L]
+
+  RewriteCond %{REQUEST_URI} \.(js|mjs|css|woff2?|ttf|eot|png|jpe?g|gif|ico|svg|webp|map)$ [NC]
+  RewriteRule ^ - [L]
+
+  # --- SPA fallback: only if file/dir does not exist ---
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  # Use "." not "^" alone — "^" alone is a weak pattern and can behave oddly for deep routes
+  RewriteRule . index.html [L]
+</IfModule>

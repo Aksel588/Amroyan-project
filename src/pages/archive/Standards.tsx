@@ -1,4 +1,6 @@
 import { useEffect } from "react";
+import { Link } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 
 const Standards = () => {
   useEffect(() => {
@@ -6,14 +8,21 @@ const Standards = () => {
   }, []);
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-gray-900 to-black pt-32 px-4">
+    <main className="min-h-screen bg-gradient-to-br from-gray-900 to-black pt-32 px-4 pb-20">
       <div className="max-w-5xl mx-auto">
+        <Link
+          to="/archive"
+          className="inline-flex items-center text-sm font-medium text-gold-400 hover:text-gold-300 transition-colors mb-6"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Դեպի Շտեմարան
+        </Link>
         <header className="text-center mb-10">
           <h1 className="text-3xl font-bold text-white">ՀՀՄՍ / ՖՀՄՍ</h1>
           <p className="text-gray-300 mt-2">Հաշվապահական ստանդարտների շտեմարան</p>
         </header>
         {/* Content will be populated later */}
-        <section className="text-gray-400">Շուտով՝ բովանդակություն և ֆիլտրեր…</section>
+        <section className="text-gray-400 text-center py-8">Շուտով՝ բովանդակություն և ֆիլտրեր…</section>
       </div>
     </main>
   );

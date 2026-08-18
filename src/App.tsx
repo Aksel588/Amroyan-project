@@ -29,6 +29,7 @@ import BlogManagement from "./pages/BlogManagement";
 import NotFound from "./pages/NotFound";
 import LoadingPage from "./components/LoadingPage";
 import AdminProtectedRoute from "./components/auth/AdminProtectedRoute";
+import TaxCalendar from "./pages/TaxCalendar";
 import Calculators from "./pages/Calculators";
 import UnifiedSalaryPage from "./pages/calculators/UnifiedSalary";
 import ProjectPage from "./pages/calculators/Project";
@@ -69,12 +70,14 @@ const App = () => {
           <Toaster />
           <Sonner />
           <BrowserRouter basename={routerBasename}>
+            <ScrollToTop />
             <div className="min-h-screen bg-black">
               <Header />
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/services" element={<Services />} />
+                <Route path="/calendar" element={<TaxCalendar />} />
                 <Route path="/archive" element={<Archive />} />
                 <Route path="/archive/standards" element={<ArchiveStandards />} />
                 <Route path="/archive/notifications" element={<ArchiveNotifications />} />
@@ -129,7 +132,6 @@ const App = () => {
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <Footer />
-              <ScrollToTop />
             </div>
           </BrowserRouter>
         </LanguageProvider>

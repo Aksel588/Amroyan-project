@@ -264,36 +264,42 @@ const Archive = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-2">
             {/* 1. Standards */}
-            <Card className="group bg-gradient-to-br from-gray-900/50 to-black border-gold-500/20">
-              <CardHeader className="text-center">
-                <div className="w-12 h-12 bg-gold-500/20 rounded-lg flex items-center justify-center mx-auto mb-4 group-hover:bg-gold-500/30 transition-colors">
-                  <FileText className="w-6 h-6 text-gold-400" />
-                </div>
-                <CardTitle className="text-white transition-colors">{t('archive.sectionCards.standardsTitle')}</CardTitle>
-                <CardDescription className="text-gray-400">{t('archive.sectionCards.standardsDesc')}</CardDescription>
-              </CardHeader>
+            <Card className="group bg-gradient-to-br from-gray-900/50 to-black border-gold-500/20 hover:border-gold-500/40 transition-all duration-300">
+              <Link to="/archive/standards" className="block">
+                <CardHeader className="text-center">
+                  <div className="w-12 h-12 bg-gold-500/20 rounded-lg flex items-center justify-center mx-auto mb-4 group-hover:bg-gold-500/30 transition-colors">
+                    <FileText className="w-6 h-6 text-gold-400" />
+                  </div>
+                  <CardTitle className="text-white group-hover:text-gold-400 transition-colors">{t('archive.sectionCards.standardsTitle')}</CardTitle>
+                  <CardDescription className="text-gray-400">{t('archive.sectionCards.standardsDesc')}</CardDescription>
+                </CardHeader>
+              </Link>
             </Card>
 
             {/* 2. PEK */}
-            <Card className="group bg-gradient-to-br from-gray-900/50 to-black border-gold-500/20">
-              <CardHeader className="text-center">
-                <div className="w-12 h-12 bg-gold-500/20 rounded-lg flex items-center justify-center mx-auto mb-4 group-hover:bg-gold-500/30 transition-colors">
-                  <ArchiveIcon className="w-6 h-6 text-gold-400" />
-                </div>
-                <CardTitle className="text-white transition-colors">{t('archive.sectionCards.pekTitle')}</CardTitle>
-                <CardDescription className="text-gray-400">{t('archive.sectionCards.pekDesc')}</CardDescription>
-              </CardHeader>
+            <Card className="group bg-gradient-to-br from-gray-900/50 to-black border-gold-500/20 hover:border-gold-500/40 transition-all duration-300">
+              <Link to="/archive/notifications" className="block">
+                <CardHeader className="text-center">
+                  <div className="w-12 h-12 bg-gold-500/20 rounded-lg flex items-center justify-center mx-auto mb-4 group-hover:bg-gold-500/30 transition-colors">
+                    <ArchiveIcon className="w-6 h-6 text-gold-400" />
+                  </div>
+                  <CardTitle className="text-white group-hover:text-gold-400 transition-colors">{t('archive.sectionCards.pekTitle')}</CardTitle>
+                  <CardDescription className="text-gray-400">{t('archive.sectionCards.pekDesc')}</CardDescription>
+                </CardHeader>
+              </Link>
             </Card>
 
             {/* 3. Discussions */}
-            <Card className="group bg-gradient-to-br from-gray-900/50 to-black border-gold-500/20">
-              <CardHeader className="text-center">
-                <div className="w-12 h-12 bg-gold-500/20 rounded-lg flex items-center justify-center mx-auto mb-4 group-hover:bg-gold-500/30 transition-colors">
-                  <Folder className="w-6 h-6 text-gold-400" />
-                </div>
-                <CardTitle className="text-white transition-colors">{t('archive.sectionCards.discussionsTitle')}</CardTitle>
-                <CardDescription className="text-gray-400">{t('archive.sectionCards.discussionsDesc')}</CardDescription>
-              </CardHeader>
+            <Card className="group bg-gradient-to-br from-gray-900/50 to-black border-gold-500/20 hover:border-gold-500/40 transition-all duration-300">
+              <Link to="/archive/discussions" className="block">
+                <CardHeader className="text-center">
+                  <div className="w-12 h-12 bg-gold-500/20 rounded-lg flex items-center justify-center mx-auto mb-4 group-hover:bg-gold-500/30 transition-colors">
+                    <Folder className="w-6 h-6 text-gold-400" />
+                  </div>
+                  <CardTitle className="text-white group-hover:text-gold-400 transition-colors">{t('archive.sectionCards.discussionsTitle')}</CardTitle>
+                  <CardDescription className="text-gray-400">{t('archive.sectionCards.discussionsDesc')}</CardDescription>
+                </CardHeader>
+              </Link>
             </Card>
 
             {/* 4. Clarifications */}

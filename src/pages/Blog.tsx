@@ -7,11 +7,11 @@ import { useEffect, useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 const LARAVEL_ORIGIN = (() => {
-  const url = import.meta.env.VITE_LARAVEL_API_URL || "https://amroyancons.am/api";
+  const url = import.meta.env.VITE_LARAVEL_API_URL || import.meta.env.VITE_API_URL || "https://amroyancons.am/api";
   try {
     return new URL(url).origin;
   } catch {
-    return (url && typeof url === 'string' ? url.replace(/\/api\/?$/, "") : "") || "http://127.0.0.1:8000";
+    return (url && typeof url === 'string' ? url.replace(/\/api\/?$/, "") : "") || "https://amroyancons.am";
   }
 })();
 
@@ -68,11 +68,14 @@ const Blog = () => {
   };
   const checkAdminStatus = async () => {
     try {
+      if (!laravelApi.getToken()) {
+        setIsAdmin(false);
+        return;
+      }
       const response = await laravelApi.getCurrentUser();
       const user = response?.data || response;
       setIsAdmin(user?.role === 'admin');
     } catch (error) {
-      console.error('Error checking admin status:', error);
       // User not logged in, that's fine
       setIsAdmin(false);
     }

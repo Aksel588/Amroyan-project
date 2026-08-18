@@ -14,11 +14,11 @@ import { laravelApi } from '@/integrations/laravel/client';
 import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 const LARAVEL_ORIGIN = (() => {
-  const url = import.meta.env.VITE_LARAVEL_API_URL || "https://amroyancons.am/api";
+  const url = import.meta.env.VITE_LARAVEL_API_URL || import.meta.env.VITE_API_URL || "https://amroyancons.am/api";
   try {
     return new URL(url).origin;
   } catch {
-    return (url && typeof url === 'string' ? url.replace(/\/api\/?$/, "") : "") || "http://127.0.0.1:8000";
+    return (url && typeof url === 'string' ? url.replace(/\/api\/?$/, "") : "") || "https://amroyancons.am";
   }
 })();
 
@@ -88,9 +88,9 @@ const Index = () => {
   })();
   const stats = [
     { number: '35+', labelKey: 0 },
-    { number: '5+', labelKey: 1 },
+    { number: '6+', labelKey: 1 },
     { number: '20%', labelKey: 2 },
-    { number: '120+', labelKey: 3 },
+    { number: '140+', labelKey: 3 },
   ].map((s) => ({ ...s, label: statsLabels[s.labelKey] ?? '' }));
   useEffect(() => {
     fetchBlogPosts();
@@ -149,7 +149,7 @@ const Index = () => {
       
       // Open document in new tab
       if (doc.file_url) {
-        const url = doc.file_url.startsWith('http') ? doc.file_url : `http://127.0.0.1:8000${doc.file_url}`;
+        const url = doc.file_url.startsWith('http') ? doc.file_url : `${LARAVEL_ORIGIN}${doc.file_url.startsWith('/') ? '' : '/'}${doc.file_url}`;
         window.open(url, "_blank", "noopener,noreferrer");
       }
     } catch (error) {
@@ -201,15 +201,15 @@ const Index = () => {
       <NetworkAnimation />
       
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center network-bg overflow-hidden">
+      <section className="relative min-h-screen flex items-center justify-center network-bg overflow-hidden pt-28 sm:pt-32 lg:pt-36 pb-16 sm:pb-20">
         <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/60 to-black/80" />
         
         <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="max-w-4xl mx-auto animate-fade-in-up">
-            <h1 className="text-4xl sm:text-5xl md:text-6xl mb-4 sm:mb-6 leading-tight font-bold lg:text-5xl">
-              <span className="gradient-text py-0 px-0 mx-0 my-[8px] font-semibold leading-relaxed">{t('home.hero.mainTitle')}</span>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl mb-4 sm:mb-6 font-bold leading-normal sm:leading-tight lg:leading-snug">
+              <span className="gradient-text inline-block font-semibold py-1 leading-normal sm:leading-tight lg:leading-snug">{t('home.hero.mainTitle')}</span>
             </h1>
-            <p className="text-lg text-gray-300 mb-6 sm:mb-8 my-0 py-[20px] sm:text-2xl">
+            <p className="text-lg text-gray-300 mb-6 sm:mb-8 my-0 py-4 sm:text-2xl leading-relaxed">
               {t('home.hero.tagline')}
             </p>
 

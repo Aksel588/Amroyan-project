@@ -93,11 +93,11 @@ const About = () => {
           </div>
 
           <ol className="relative border-l border-gold-500/30 max-w-3xl mx-auto pl-6 space-y-8">
-            {[0, 1, 2, 3, 4].map((i) => (
+            {timelineItems.map((item, i) => (
               <li key={i} className="relative">
                 <span className="absolute -left-3 top-1 w-6 h-6 rounded-full bg-gradient-to-br from-gold-500 to-gold-600 ring-4 ring-black" aria-hidden="true" />
                 <div className="bg-gradient-to-b from-gray-900 to-black rounded-xl border border-gold-500/20 p-5">
-                  <h3 className="font-semibold text-white">{timelineItems[i] ?? ''}</h3>
+                  <h3 className="font-semibold text-white">{item}</h3>
                 </div>
               </li>
             ))}

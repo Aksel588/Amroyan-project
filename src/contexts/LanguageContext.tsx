@@ -67,6 +67,7 @@ const translations = {
         about: 'Մեր մասին',
         services: 'Ծառայություններ',
         calculators: 'Հաշվիչներ',
+        calendar: 'Օրացույց',
         archive: 'Շտեմարան',
         blog: 'Նորություններ',
         contact: 'Կապ'
@@ -85,10 +86,10 @@ const translations = {
         servicesBtn: 'Ծառայություններ',
         contactBtn: 'Դիմել',
         stats: {
-          experience: '4+ տարիների փորձ',
+          experience: '6+ տարիների փորձ',
           clients: '200+ գործընկերներ',
           satisfaction: '98% բավարարված հաճախորդներ',
-          projects: '500+ կատարված նախագծեր'
+          projects: '140+ կատարված նախագծեր'
         },
         statsLabels: ['գործընկերներ', 'տարիների փորձ', 'տարեկան աճ', 'կատարված նախագծեր']
       },
@@ -337,7 +338,7 @@ const translations = {
     },
     about: {
       heroTitle: 'Մեր մասին',
-      heroSubtitle: 'Amroyan Consulting-ը առաջատար ընկերություն է հաշվապահական և ֆինանսական ծառայությունների ոլորտում՝ 5+ տարվա փորձով:',
+      heroSubtitle: 'Amroyan Consulting-ը առաջատար ընկերություն է հաշվապահական և ֆինանսական ծառայությունների ոլորտում՝ 6+ տարվա փորձով:',
       missionLabel: 'Առաքելություն',
       missionTitle: 'Մեր առաքելությունը',
       missionP1: 'Մեր նպատակն է օգնել բիզնեսներին հասնել ֆինանսական կայունության և աճի՝ տրամադրելով պրոֆեսիոնալ հաշվապահական և ֆինանսական ծառայություններ։',
@@ -357,7 +358,8 @@ const translations = {
         '2021 — առաջին 20+ իրագործված նախագծեր',
         '2022 — կրթական ծրագրերի ներդրում, առաջին դասընթացների անցկացում',
         '2024 — 100+ նախագծերի ապահովում',
-        '2025 — 5 տարվա գործունեություն շուկայում, ավելի քան 30 նոր գործընկերներ'
+        '2025 — 5 տարվա գործունեություն շուկայում, ավելի քան 30 նոր գործընկերներ',
+        '2026 — 6 տարվա գործունեություն շուկայում, ավելի քան 35 նոր գործընկերներ'
       ]
     },
     archive: {
@@ -430,7 +432,7 @@ const translations = {
       heroTitle: 'Ֆինանսական հաշվիչներ',
       heroSubtitle: 'Պրոֆեսիոնալ գործիքներ ձեր բիզնեսի ֆինանսական հաշվարկների համար',
       stats: [
-        { number: '4+', label: 'հաշվիչներ' },
+        { number: '5+', label: 'հաշվիչներ' },
         { number: '100%', label: 'ճշգրտություն' },
         { number: '24/7', label: 'մատչելիություն' },
         { number: '0', label: 'ծախս' }
@@ -485,6 +487,7 @@ const translations = {
         about: 'О нас',
         services: 'Услуги',
         calculators: 'Калькуляторы',
+        calendar: 'Календарь',
         archive: 'Архив',
         blog: 'Новости',
         contact: 'Контакты'
@@ -503,10 +506,10 @@ const translations = {
         servicesBtn: 'Услуги',
         contactBtn: 'Обратиться',
         stats: {
-          experience: '4+ лет опыта',
+          experience: '6+ лет опыта',
           clients: '200+ партнеров',
           satisfaction: '98% довольных клиентов',
-          projects: '500+ выполненных проектов'
+          projects: '140+ выполненных проектов'
         },
         statsLabels: ['партнеров', 'лет опыта', 'годовой рост', 'выполненных проектов']
       },
@@ -755,7 +758,7 @@ const translations = {
     },
     about: {
       heroTitle: 'О нас',
-      heroSubtitle: 'Amroyan Consulting — ведущая компания в сфере бухгалтерских и финансовых услуг с опытом более 5 лет.',
+      heroSubtitle: 'Amroyan Consulting — ведущая компания в сфере бухгалтерских и финансовых услуг с опытом более 6 лет.',
       missionLabel: 'Миссия',
       missionTitle: 'Наша миссия',
       missionP1: 'Наша цель — помогать бизнесу достигать финансовой стабильности и роста, предоставляя профессиональные бухгалтерские и финансовые услуги.',
@@ -775,7 +778,8 @@ const translations = {
         '2021 — первые 20+ реализованных проектов',
         '2022 — внедрение образовательных программ, первые курсы',
         '2024 — более 100 реализованных проектов',
-        '2025 — 5 лет на рынке, более 30 новых партнеров'
+        '2025 — 5 лет на рынке, более 30 новых партнеров',
+        '2026 — 6 лет на рынке, более 35 новых партнеров'
       ]
     },
     archive: {
@@ -848,7 +852,7 @@ const translations = {
       heroTitle: 'Финансовые калькуляторы',
       heroSubtitle: 'Профессиональные инструменты для финансовых расчетов вашего бизнеса',
       stats: [
-        { number: '4+', label: 'калькуляторов' },
+        { number: '5+', label: 'калькуляторов' },
         { number: '100%', label: 'точность' },
         { number: '24/7', label: 'доступность' },
         { number: '0', label: 'затрат' }
@@ -903,6 +907,7 @@ const translations = {
         about: 'About',
         services: 'Services',
         calculators: 'Calculators',
+        calendar: 'Calendar',
         archive: 'Archive',
         blog: 'News',
         contact: 'Contact'
@@ -921,10 +926,10 @@ const translations = {
         servicesBtn: 'Services',
         contactBtn: 'Contact',
         stats: {
-          experience: '4+ years experience',
+          experience: '6+ years of experience',
           clients: '200+ partners',
           satisfaction: '98% satisfied clients',
-          projects: '500+ completed projects'
+          projects: '140+ completed projects'
         },
         statsLabels: ['partners', 'years experience', 'annual growth', 'completed projects']
       },
@@ -1173,7 +1178,7 @@ const translations = {
     },
     about: {
       heroTitle: 'About us',
-      heroSubtitle: 'Amroyan Consulting is a leading company in accounting and financial services with over 5 years of experience.',
+      heroSubtitle: 'Amroyan Consulting is a leading company in accounting and financial services with over 6 years of experience.',
       missionLabel: 'Mission',
       missionTitle: 'Our mission',
       missionP1: 'Our goal is to help businesses achieve financial stability and growth by providing professional accounting and financial services.',
@@ -1193,7 +1198,8 @@ const translations = {
         '2021 — first 20+ completed projects',
         '2022 — educational programs launch, first courses',
         '2024 — 100+ projects delivered',
-        '2025 — 5 years in the market, over 30 new partners'
+        '2025 — 5 years in the market, over 30 new partners',
+        '2026 — 6 years in the market, over 35 new partners'
       ]
     },
     archive: {
@@ -1266,7 +1272,7 @@ const translations = {
       heroTitle: 'Financial calculators',
       heroSubtitle: 'Professional tools for your business financial calculations',
       stats: [
-        { number: '4+', label: 'calculators' },
+        { number: '5+', label: 'calculators' },
         { number: '100%', label: 'accuracy' },
         { number: '24/7', label: 'availability' },
         { number: '0', label: 'cost' }

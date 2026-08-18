@@ -14,6 +14,18 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    proxy: {
+      '/api': {
+        target: 'https://amroyancons.am',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/storage': {
+        target: 'https://amroyancons.am',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
   },
   plugins: [
     react(),

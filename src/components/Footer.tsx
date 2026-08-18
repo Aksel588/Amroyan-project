@@ -13,6 +13,8 @@ const Footer = () => {
     { name: t('header.nav.home'), href: '/' },
     { name: t('header.nav.about'), href: '/about' },
     { name: t('header.nav.services'), href: '/services' },
+    { name: t('header.nav.calculators'), href: '/calculators' },
+    { name: t('header.nav.calendar'), href: '/calendar' },
     { name: t('header.nav.blog'), href: '/blog' }
   ];
   const services = [

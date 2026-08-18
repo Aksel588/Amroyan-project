@@ -1,5 +1,5 @@
 // Laravel API Client
-const LARAVEL_API_URL = import.meta.env.VITE_LARAVEL_API_URL || "https://amroyancons.am/api";;
+const LARAVEL_API_URL = import.meta.env.VITE_LARAVEL_API_URL || import.meta.env.VITE_API_URL || "/api";
 
 class LaravelApiClient {
   private baseUrl: string;
@@ -108,6 +108,9 @@ class LaravelApiClient {
   }
 
   async getCurrentUser() {
+    if (!this.token) {
+      return null;
+    }
     return await this.request('/auth/user');
   }
 

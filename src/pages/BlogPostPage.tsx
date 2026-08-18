@@ -14,11 +14,11 @@ import { laravelApi } from "@/integrations/laravel/client";
 import { useEffect, useState } from "react";
 
 const LARAVEL_ORIGIN = (() => {
-  const url = import.meta.env.VITE_LARAVEL_API_URL || "https://amroyancons.am/api";
+  const url = import.meta.env.VITE_LARAVEL_API_URL || import.meta.env.VITE_API_URL || "https://amroyancons.am/api";
   try {
     return new URL(url).origin;
   } catch {
-    return url.replace(/\/api\/?$/, "") || "http://127.0.0.1:8001";
+    return url.replace(/\/api\/?$/, "") || "https://amroyancons.am";
   }
 })();
 

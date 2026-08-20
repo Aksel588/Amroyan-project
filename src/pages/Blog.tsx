@@ -6,6 +6,8 @@ import { laravelApi } from "@/integrations/laravel/client";
 import { useEffect, useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { BLOG_CATEGORY_FILTERS, normalizeBlogCategory, getBlogCategoryLabel } from "@/lib/blogCategories";
+
 const LARAVEL_ORIGIN = (() => {
   const url = import.meta.env.VITE_LARAVEL_API_URL || import.meta.env.VITE_API_URL || "https://amroyancons.am/api";
   try {
@@ -40,17 +42,22 @@ interface BlogPost {
   featured_image?: string;
   created_at: string;
 }
+
 const Blog = () => {
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, currentLanguage } = useLanguage();
+
+  const locale = currentLanguage === 'hy' ? 'hy-AM' : currentLanguage === 'ru' ? 'ru-RU' : 'en-US';
+
   useEffect(() => {
     fetchBlogPosts();
     checkAdminStatus();
   }, []);
+
   const fetchBlogPosts = async () => {
     try {
       const response = await laravelApi.getBlogPosts({ published: true });
@@ -66,6 +73,7 @@ const Blog = () => {
       setLoading(false);
     }
   };
+
   const checkAdminStatus = async () => {
     try {
       if (!laravelApi.getToken()) {
@@ -80,17 +88,19 @@ const Blog = () => {
       setIsAdmin(false);
     }
   };
+
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">
         <div className="text-lg">{t('blog.loading')}</div>
       </div>;
   }
+
   const filteredPosts = selectedCategory === 'all'
     ? blogPosts
-    : blogPosts.filter(p => p.category === selectedCategory);
+    : blogPosts.filter(p => normalizeBlogCategory(p.category) === selectedCategory);
   const featuredPost = filteredPosts.find(p => p.featured) || filteredPosts[0];
   const otherPosts = featuredPost ? filteredPosts.filter(p => p.slug !== featuredPost.slug) : filteredPosts;
-  const categoryValues = ['all', 'Հարկային', 'Ֆինանսներ', 'Տեխնոլոգիաներ', 'Բիզնես', 'Տնտեսություն', 'HR', 'Հեղինակային'];
+
   return <div className="pt-20">
       {/* Hero Section */}
       <section className="py-20 bg-gradient-to-br from-black via-gray-900 to-black network-bg">
@@ -134,7 +144,7 @@ const Blog = () => {
                   <CardContent className="p-8 lg:p-12 flex flex-col">
                     <div className="flex items-center space-x-4 mb-4">
                       <span className="bg-gold-500/20 text-gold-400 px-3 py-1 rounded-full text-sm">
-                        {featuredPost.category}
+                        {getBlogCategoryLabel(featuredPost.category, t)}
                       </span>
                       <span className="text-gray-400 text-sm flex items-center gap-1.5">
                         <Clock size={14} /> {featuredPost.read_time}
@@ -159,7 +169,7 @@ const Blog = () => {
                         </div>
                         <div className="flex items-center space-x-2">
                           <Calendar size={16} />
-                          <span>{new Date(featuredPost.created_at).toLocaleDateString('hy-AM')}</span>
+                          <span>{new Date(featuredPost.created_at).toLocaleDateString(locale)}</span>
                         </div>
                       </div>
                       
@@ -180,16 +190,16 @@ const Blog = () => {
       <section className="py-8 bg-gradient-to-b from-black to-gray-900">
         <div className="container mx-auto px-4">
           <div className="flex flex-wrap justify-center gap-4">
-            {categoryValues.map((category, index) => (
+            {BLOG_CATEGORY_FILTERS.map((category) => (
               <Button
-                key={index}
-                onClick={() => setSelectedCategory(category)}
-                variant={selectedCategory === category ? "default" : "outline"}
-                className={selectedCategory === category
+                key={category.id}
+                onClick={() => setSelectedCategory(category.id)}
+                variant={selectedCategory === category.id ? "default" : "outline"}
+                className={selectedCategory === category.id
                   ? "bg-gradient-to-r from-gold-500 to-gold-600 text-black"
                   : "border-gold-500/30 text-gray-300 hover:bg-gold-500/10 hover:text-gold-400"}
               >
-                {category === 'all' ? t('blog.allCategory') : category}
+                {t(category.key)}
               </Button>
             ))}
           </div>
@@ -215,7 +225,7 @@ const Blog = () => {
                 <CardHeader className="pb-4">
                   <div className="flex items-center space-x-3 mb-3">
                     <span className="bg-gold-500/20 text-gold-400 px-2 py-1 rounded text-xs">
-                      {post.category}
+                      {getBlogCategoryLabel(post.category, t)}
                     </span>
                     <span className="text-gray-400 text-xs flex items-center gap-1">
                       <Clock size={12} /> {post.read_time}
@@ -240,7 +250,7 @@ const Blog = () => {
                       </div>
                       <div className="flex items-center space-x-2 text-xs text-gray-400">
                         <Calendar size={12} />
-                        <span>{new Date(post.created_at).toLocaleDateString('hy-AM')}</span>
+                        <span>{new Date(post.created_at).toLocaleDateString(locale)}</span>
                       </div>
                     </div>
                     

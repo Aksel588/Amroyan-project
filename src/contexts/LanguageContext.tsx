@@ -390,9 +390,9 @@ const translations = {
       },
       sectionCards: {
         standardsTitle: 'ՀՀՄՍ / ՖՀՄՍ',
-        standardsDesc: 'Հայաստանի հաշվապահական միջազգային ստանդարտներ',
+        standardsDesc: 'Ֆինանսական հաշվետվությունների միջազգային ստանդարտներ / Հաշվապահական հաշվառման միջազգային ստանդարտներ',
         pekTitle: 'ՊԵԿ իրազեկումներ',
-        pekDesc: 'Պետական եկամուտների կոմիտեի ծանուցումներ',
+        pekDesc: 'Պետական եկամուտների կոմիտեի իրազեկումներ',
         discussionsTitle: 'Քննարկումներ',
         discussionsDesc: 'Մասնագիտական քննարկումներ և վերլուծություններ',
         clarificationsTitle: 'Պաշտոնական պարզաբանումներ',
@@ -406,9 +406,27 @@ const translations = {
         testsAccounting: 'Հաշվապահական և ֆինանսական ոլորտ',
         testsHr: 'HR, կադրային ոլորտ'
       },
+      subpages: {
+        backToArchive: 'Դեպի Շտեմարան',
+        comingSoon: 'Շուտով՝ բովանդակություն և ֆիլտրեր…',
+        standardsTitle: 'ՀՀՄՍ / ՖՀՄՍ',
+        standardsSubtitle: 'Ֆինանսական հաշվետվությունների միջազգային ստանդարտներ / Հաշվապահական հաշվառման միջազգային ստանդարտներ',
+        pekTitle: 'ՊԵԿ իրազեկումներ',
+        pekSubtitle: 'ՊԵԿ պաշտոնական հաղորդագրություններ և թարմացումներ',
+        discussionsTitle: 'Քննարկումներ',
+        discussionsSubtitle: 'Մասնագիտական քննարկումներ և կարծիքներ',
+        clarificationsTaxTitle: 'Պաշտոնական պարզաբանումներ · Հարկային օրենսդրություն',
+        clarificationsTaxSubtitle: 'ՀԴՕ-ի կիրառման պաշտոնական մեկնաբանություններ',
+        clarificationsLaborTitle: 'Պաշտոնական պարզաբանումներ · Աշխատանքային օրենսդրություն',
+        clarificationsLaborSubtitle: 'Աշխատանքային իրավունքի կիրառման մեկնաբանություններ',
+        testsAccountingTitle: 'Թեստեր · Հաշվապահական և ֆինանսական ոլորտ',
+        testsAccountingSubtitle: 'Գիտելիքի ստուգման հարցաշարեր',
+        testsHrTitle: 'Թեստեր · HR, կադրային ոլորտ',
+        testsHrSubtitle: 'Մարդկային ռեսուրսների ոլորտի թեստեր'
+      },
       categories: {
         standards: 'Ստանդարտներ',
-        pek_notifications: 'ՊԵԿ ծանուցումներ',
+        pek_notifications: 'ՊԵԿ իրազեկումներ',
         clarifications_tax: 'Հարկային պարզաբանումներ',
         clarifications_labor: 'Աշխատանքային պարզաբանումներ',
         discussions: 'Քննարկումներ',
@@ -423,6 +441,22 @@ const translations = {
       seeAll: 'Տեսնել բոլորը',
       allCategory: 'Բոլորը',
       loading: 'Բեռնում...',
+      notFound: 'Գրառումը չի գտնվել',
+      notFoundDesc: 'Ձեր հարցած հղումով գրառում չկա կամ այն հեռացվել է։',
+      backToBlog: 'Վերադառնալ բլոգ',
+      relatedPosts: 'Նմանատիպ հոդվածներ',
+      authorBioPrefix: 'Amroyan Consulting-ի առաջատար մասնագետ,',
+      authorBioSuffix: 'ոլորտի փորձագետ։',
+      categories: {
+        all: 'Բոլորը',
+        tax: 'Հարկային',
+        finance: 'Ֆինանսներ',
+        technology: 'Տեխնոլոգիաներ',
+        business: 'Բիզնես',
+        economy: 'Տնտեսություն',
+        hr: 'HR',
+        author: 'Հեղինակային'
+      },
       toast: {
         error: 'Սխալ',
         loadFailed: 'Չհաջողվեց բեռնել բլոգի գրառումները'
@@ -522,7 +556,7 @@ const translations = {
           'Финансовый анализ',
           'Финансовая отчетность',
           'Бизнес-консультирование',
-          'Групповые и индивидуальные курсы бухгалтерии'
+          'Групповые и индивидуальные бухгалтерские курсы'
         ],
         apply: 'Подать заявку'
       },
@@ -602,7 +636,7 @@ const translations = {
           features: ['Аудит-обзор перед проверкой', 'Оценка и снижение рисков', 'Сопровождение проверки']
         },
         {
-          title: 'Групповые и индивидуальные курсы бухгалтерии',
+          title: 'Групповые и индивидуальные бухгалтерские курсы',
           description: 'Практические курсы для начинающих и специалистов',
           features: ['Курсы бухгалтерского учета', 'Курсы финансового и управленческого учета', 'Курсы кадрового учета', 'Семинары по налоговой и кадровой тематике']
         }
@@ -810,9 +844,9 @@ const translations = {
       },
       sectionCards: {
         standardsTitle: 'МСФО / МСБУ',
-        standardsDesc: 'Международные стандарты финансовой отчётности Армении',
-        pekTitle: 'Уведомления ГНК',
-        pekDesc: 'Уведомления Комитета государственных доходов',
+        standardsDesc: 'Международные стандарты финансовой отчетности / международные стандарты бухгалтерской отчетности',
+        pekTitle: 'Уведомления КГН РА',
+        pekDesc: 'Уведомления Комитета государственных налогов РА',
         discussionsTitle: 'Обсуждения',
         discussionsDesc: 'Профессиональные обсуждения и аналитика',
         clarificationsTitle: 'Официальные разъяснения',
@@ -826,9 +860,27 @@ const translations = {
         testsAccounting: 'Бухгалтерия и финансы',
         testsHr: 'HR, кадровая сфера'
       },
+      subpages: {
+        backToArchive: 'В Архив',
+        comingSoon: 'Скоро: материалы и фильтры…',
+        standardsTitle: 'МСФО / МСБУ',
+        standardsSubtitle: 'Международные стандарты финансовой отчетности / международные стандарты бухгалтерской отчетности',
+        pekTitle: 'Уведомления КГН РА',
+        pekSubtitle: 'Официальные сообщения и обновления Комитета государственных налогов РА',
+        discussionsTitle: 'Обсуждения',
+        discussionsSubtitle: 'Профессиональные обсуждения и мнения',
+        clarificationsTaxTitle: 'Официальные разъяснения · Налоговое законодательство',
+        clarificationsTaxSubtitle: 'Официальные комментарии по применению налогового законодательства',
+        clarificationsLaborTitle: 'Официальные разъяснения · Трудовое законодательство',
+        clarificationsLaborSubtitle: 'Комментарии по применению трудового законодательства',
+        testsAccountingTitle: 'Тесты · Бухгалтерский учет и финансы',
+        testsAccountingSubtitle: 'Опросники для проверки профессиональных знаний',
+        testsHrTitle: 'Тесты · HR, кадровая сфера',
+        testsHrSubtitle: 'Тесты в области управления персоналом'
+      },
       categories: {
         standards: 'Стандарты',
-        pek_notifications: 'Уведомления ГНК',
+        pek_notifications: 'Уведомления КГН РА',
         clarifications_tax: 'Налоговые разъяснения',
         clarifications_labor: 'Трудовые разъяснения',
         discussions: 'Обсуждения',
@@ -843,6 +895,22 @@ const translations = {
       seeAll: 'Смотреть все',
       allCategory: 'Все',
       loading: 'Загрузка...',
+      notFound: 'Запись не найдена',
+      notFoundDesc: 'По вашему запросу запись не найдена или она была удалена.',
+      backToBlog: 'Вернуться в новости',
+      relatedPosts: 'Похожие статьи',
+      authorBioPrefix: 'Ведущий специалист Amroyan Consulting, эксперт в сфере',
+      authorBioSuffix: '.',
+      categories: {
+        all: 'Все',
+        tax: 'Налоги',
+        finance: 'Финансы',
+        technology: 'Технологии',
+        business: 'Бизнес',
+        economy: 'Экономика',
+        hr: 'HR',
+        author: 'Авторские'
+      },
       toast: {
         error: 'Ошибка',
         loadFailed: 'Не удалось загрузить записи блога'
@@ -1191,7 +1259,7 @@ const translations = {
         { title: 'Purpose', description: 'We are focused on your business success and work to achieve the best results.' },
         { title: 'Efficiency', description: 'Time is value, and we value your time by saving it.' }
       ],
-      timelineTitle: 'Our journey',
+      timelineTitle: 'Our path',
       timelineSubtitle: 'Key milestones in our company development',
       timeline: [
         '2020 — company foundation',
@@ -1230,30 +1298,48 @@ const translations = {
       },
       sectionCards: {
         standardsTitle: 'IFRS / IAS',
-        standardsDesc: 'Armenia international accounting standards',
-        pekTitle: 'Tax committee notifications',
+        standardsDesc: 'International Financial Reporting Standards / International Accounting Standards',
+        pekTitle: 'Tax Committee Notifications',
         pekDesc: 'State Revenue Committee notifications',
         discussionsTitle: 'Discussions',
         discussionsDesc: 'Professional discussions and analysis',
-        clarificationsTitle: 'Official clarifications',
+        clarificationsTitle: 'Official Clarifications',
         clarificationsDesc: 'Official clarifications and commentaries',
         clarificationsAria: 'Clarification subcategories',
-        taxLaw: 'Tax legislation',
-        laborLaw: 'Labor legislation',
+        taxLaw: 'Tax Legislation',
+        laborLaw: 'Labor Legislation',
         testsTitle: 'Tests',
         testsDesc: 'Professional tests and checks',
         testsAria: 'Test subcategories',
-        testsAccounting: 'Accounting and finance',
-        testsHr: 'HR, personnel'
+        testsAccounting: 'Accounting and Finance',
+        testsHr: 'HR, Personnel'
+      },
+      subpages: {
+        backToArchive: 'Back to Archive',
+        comingSoon: 'Coming soon: content and filters…',
+        standardsTitle: 'IFRS / IAS',
+        standardsSubtitle: 'International Financial Reporting Standards / International Accounting Standards',
+        pekTitle: 'Tax Committee Notifications',
+        pekSubtitle: 'State Revenue Committee official notices and updates',
+        discussionsTitle: 'Discussions',
+        discussionsSubtitle: 'Professional discussions and opinions',
+        clarificationsTaxTitle: 'Official Clarifications · Tax Legislation',
+        clarificationsTaxSubtitle: 'Official commentaries on the application of tax legislation',
+        clarificationsLaborTitle: 'Official Clarifications · Labor Legislation',
+        clarificationsLaborSubtitle: 'Commentaries on the application of labor legislation',
+        testsAccountingTitle: 'Tests · Accounting and Finance',
+        testsAccountingSubtitle: 'Questionnaires for professional knowledge assessment',
+        testsHrTitle: 'Tests · HR and Personnel',
+        testsHrSubtitle: 'Human resources assessment tests'
       },
       categories: {
         standards: 'Standards',
-        pek_notifications: 'Tax committee notifications',
-        clarifications_tax: 'Tax clarifications',
-        clarifications_labor: 'Labor clarifications',
+        pek_notifications: 'Tax Committee Notifications',
+        clarifications_tax: 'Tax Clarifications',
+        clarifications_labor: 'Labor Clarifications',
         discussions: 'Discussions',
-        tests_accounting_finance: 'Accounting and finance tests',
-        tests_hr: 'HR tests'
+        tests_accounting_finance: 'Accounting and Finance Tests',
+        tests_hr: 'HR Tests'
       }
     },
     blog: {
@@ -1263,6 +1349,22 @@ const translations = {
       seeAll: 'See all',
       allCategory: 'All',
       loading: 'Loading...',
+      notFound: 'Post not found',
+      notFoundDesc: 'The post you are looking for does not exist or has been removed.',
+      backToBlog: 'Back to news',
+      relatedPosts: 'Related articles',
+      authorBioPrefix: 'Lead specialist at Amroyan Consulting, expert in',
+      authorBioSuffix: '.',
+      categories: {
+        all: 'All',
+        tax: 'Tax',
+        finance: 'Finance',
+        technology: 'Technologies',
+        business: 'Business',
+        economy: 'Economy',
+        hr: 'HR',
+        author: 'Author\'s'
+      },
       toast: {
         error: 'Error',
         loadFailed: 'Failed to load blog posts'

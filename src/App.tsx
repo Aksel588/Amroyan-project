@@ -35,8 +35,6 @@ import UnifiedSalaryPage from "./pages/calculators/UnifiedSalary";
 import ProjectPage from "./pages/calculators/Project";
 import TurnoverTaxPage from "./pages/calculators/TurnoverTax";
 import ArmenianTaxPage from "./pages/calculators/ArmenianTax";
-import VATCalculatorPage from "./pages/calculators/VAT";
-import ProfitTaxCalculatorPage from "./pages/calculators/ProfitTax";
 import BenefitCalculatorPage from "./pages/calculators/Benefit";
 import EstimateCalculatorPage from "./pages/calculators/Estimate";
 import CalculatorPage from "./pages/CalculatorPage";
@@ -99,8 +97,6 @@ const App = () => {
                 <Route path="/calculators/turnover-tax" element={<TurnoverTaxPage />} />
                 <Route path="/calculators/armenian-tax" element={<ArmenianTaxPage />} />
                 <Route path="/calculators/armenian-payroll" element={<UnifiedSalaryPage />} />
-                <Route path="/calculators/vat" element={<VATCalculatorPage />} />
-                <Route path="/calculators/profit-tax" element={<ProfitTaxCalculatorPage />} />
                 <Route path="/calculators/benefit" element={<BenefitCalculatorPage />} />
                 <Route path="/calculators/:slug" element={<CalculatorPage />} />
 

@@ -13,6 +13,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { laravelApi } from '@/integrations/laravel/client';
 import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { getBlogCategoryLabel } from '@/lib/blogCategories';
 const LARAVEL_ORIGIN = (() => {
   const url = import.meta.env.VITE_LARAVEL_API_URL || import.meta.env.VITE_API_URL || "https://amroyancons.am/api";
   try {
@@ -58,9 +59,11 @@ interface Document {
 }
 const Index = () => {
   const {
-    t
+    t,
+    currentLanguage
   } = useLanguage();
   const { toast } = useToast();
+  const locale = currentLanguage === 'hy' ? 'hy-AM' : currentLanguage === 'ru' ? 'ru-RU' : 'en-US';
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
@@ -124,16 +127,9 @@ const Index = () => {
   };
 
   const getCategoryTitle = (category: string) => {
-    const titles: Record<string, string> = {
-      standards: "Ստանդարտներ",
-      pek_notifications: "ՊԵԿ ծանուցումներ",
-      clarifications_tax: "Հարկային պարզաբանումներ",
-      clarifications_labor: "Աշխատանքային պարզաբանումներ",
-      discussions: "Քննարկումներ",
-      tests_accounting_finance: "Հաշվապահական թեստեր",
-      tests_hr: "HR թեստեր"
-    };
-    return titles[category] || category;
+    const key = `archive.categories.${category}`;
+    const translated = t(key);
+    return translated !== key ? translated : category;
   };
 
   const formatFileSize = (bytes?: number) => {
@@ -472,7 +468,7 @@ const Index = () => {
                 <CardContent className="p-4 sm:p-6 flex flex-col flex-grow">
                   <div className="mb-3 sm:mb-4">
                     <span className="bg-gold-500/20 text-gold-400 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm">
-                      {post.category}
+                      {getBlogCategoryLabel(post.category, t)}
                     </span>
                   </div>
                   
@@ -491,7 +487,7 @@ const Index = () => {
                      </div>
                      <div className="flex items-center space-x-2">
                        <Calendar size={12} />
-                       <span>{new Date(post.created_at).toLocaleDateString('hy-AM')}</span>
+                       <span>{new Date(post.created_at).toLocaleDateString(locale)}</span>
                      </div>
                    </div>
                   

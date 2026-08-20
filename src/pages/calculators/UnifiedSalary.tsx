@@ -6,30 +6,35 @@ import { Calculator } from 'lucide-react';
 import SalaryCalculator from '@/components/calculators/SalaryCalculator';
 import ComprehensiveSalaryCalculator from '@/components/calculators/ComprehensiveSalaryCalculator';
 import ArmenianPayrollCalculator from '@/components/calculators/ArmenianPayrollCalculator';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getCalculatorTranslations, Language } from '@/lib/calculatorTranslations';
 
-const OPTIONS = [
-  {
-    value: 'simple',
-    desc: 'Աշխատավարձի հաշվիչը հնարավորություն է տալիս պարզ և մատչելի կերպով հաշվարկել աշխատավարձի չափը, հարկերը և այլ վճարների չափերը։',
-    tags: ['աշխատավարձ', 'հարկ', 'կուտակային'],
-  },
-  {
-    value: 'comprehensive',
-    desc: 'Հաշվեք աշխատավարձի ֆոնդը, հարկերը, ծախսերը և վերջնական գինը՝ ժամավճարային, օրավճարային և ամսավճարային դրույքներով',
-    tags: ['աշխատավարձ', 'ֆոնդ', 'հարկ'],
-  },
-  {
-    value: 'armenian-payroll',
-    desc: 'Հաշվեք կեղտոտ/մաքուր աշխատավարձը՝ եկամտահարկ, սոցիալական վճարներ և դրոշմանիշային վճար',
-    tags: ['աշխատավարձ', 'կեղտոտ', 'մաքուր'],
-  },
-] as const;
-
-type ChoiceValue = (typeof OPTIONS)[number]['value'];
+type ChoiceValue = 'simple' | 'comprehensive' | 'armenian-payroll';
 
 const UnifiedSalaryPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
+  const { currentLanguage } = useLanguage();
+  const tCalc = getCalculatorTranslations(currentLanguage as Language);
+
+  const options = [
+    {
+      value: 'simple' as const,
+      desc: tCalc.unifiedSalary.simpleDesc,
+      tags: tCalc.unifiedSalary.simpleTags,
+    },
+    {
+      value: 'comprehensive' as const,
+      desc: tCalc.unifiedSalary.compDesc,
+      tags: tCalc.unifiedSalary.compTags,
+    },
+    {
+      value: 'armenian-payroll' as const,
+      desc: tCalc.unifiedSalary.payrollDesc,
+      tags: tCalc.unifiedSalary.payrollTags,
+    },
+  ];
+
   const typeParam = searchParams.get('type') as ChoiceValue | null;
   const initialFromPath =
     location.pathname === '/calculators/comprehensive-salary'
@@ -37,23 +42,24 @@ const UnifiedSalaryPage = () => {
       : location.pathname === '/calculators/armenian-payroll'
         ? 'armenian-payroll'
         : null;
+
   const [selected, setSelected] = useState<ChoiceValue>(() => {
     if (initialFromPath) return initialFromPath;
-    if (typeParam && OPTIONS.some((o) => o.value === typeParam)) return typeParam;
+    if (typeParam && (typeParam === 'simple' || typeParam === 'comprehensive' || typeParam === 'armenian-payroll')) return typeParam;
     return 'simple';
   });
 
   useEffect(() => {
-    document.title = 'Աշխատավարձի հաշվիչ | Amroyan Consulting';
+    document.title = `${tCalc.salary.title} | Amroyan Consulting`;
     const meta = document.querySelector('meta[name="description"]');
-    if (meta) meta.setAttribute('content', 'Հաշվարկեք աշխատավարձը՝ պարզ, լրիվ կամ կեղտոտ/մաքուր ռեժիմով');
+    if (meta) meta.setAttribute('content', tCalc.salary.description);
     const canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
     if (canonical) canonical.setAttribute('href', window.location.origin + '/calculators/salary');
-  }, []);
+  }, [tCalc]);
 
   useEffect(() => {
     if (initialFromPath) setSelected(initialFromPath);
-    else if (typeParam && OPTIONS.some((o) => o.value === typeParam)) setSelected(typeParam);
+    else if (typeParam && (typeParam === 'simple' || typeParam === 'comprehensive' || typeParam === 'armenian-payroll')) setSelected(typeParam);
   }, [typeParam, initialFromPath]);
 
   const onChoiceChange = (value: ChoiceValue) => {
@@ -64,13 +70,13 @@ const UnifiedSalaryPage = () => {
   return (
     <main className="pt-24 pb-12 bg-gradient-to-b from-black via-gray-900 to-black min-h-screen">
       <section className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-5xl">
-        <h1 className="sr-only">Աշխատավարձի հաշվիչ</h1>
+        <h1 className="sr-only">{tCalc.salary.title}</h1>
 
         <Card className="mb-6 border-gold-500/30 bg-gray-800/50">
           <CardContent className="p-4">
-            <p className="text-sm text-gray-400 mb-3">Ընտրեք հաշվիչը</p>
+            <p className="text-sm text-gray-400 mb-3">{tCalc.unifiedSalary.chooseCalculator}</p>
             <div className="space-y-3">
-              {OPTIONS.map((opt) => (
+              {options.map((opt) => (
                 <label
                   key={opt.value}
                   className={`flex items-start gap-3 cursor-pointer rounded-lg border p-3 transition-colors ${

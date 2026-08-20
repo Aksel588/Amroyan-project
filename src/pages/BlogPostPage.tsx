@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/breadcrumb";
 import { laravelApi } from "@/integrations/laravel/client";
 import { useEffect, useState } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { getBlogCategoryLabel } from "@/lib/blogCategories";
 
 const LARAVEL_ORIGIN = (() => {
   const url = import.meta.env.VITE_LARAVEL_API_URL || import.meta.env.VITE_API_URL || "https://amroyancons.am/api";
@@ -87,6 +89,9 @@ const BlogPostPage = () => {
   const [post, setPost] = useState<BlogPost | null>(null);
   const [relatedPosts, setRelatedPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const { t, currentLanguage } = useLanguage();
+
+  const locale = currentLanguage === 'hy' ? 'hy-AM' : currentLanguage === 'ru' ? 'ru-RU' : 'en-US';
 
   useEffect(() => {
     if (slug) {
@@ -96,8 +101,6 @@ const BlogPostPage = () => {
 
   const fetchPost = async () => {
     try {
-      // For now, we'll use a placeholder since we need to implement slug-based fetching
-      // In a real implementation, you'd add a method to fetch by slug
       const response = await laravelApi.getBlogPosts({ published: true });
       const postData = response.data?.find((p: any) => p.slug === slug);
       
@@ -121,7 +124,7 @@ const BlogPostPage = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Բեռնում...</div>
+        <div className="text-lg">{t('blog.loading')}</div>
       </div>
     );
   }
@@ -129,14 +132,14 @@ const BlogPostPage = () => {
   if (!post) {
     return (
       <div className="min-h-screen pt-20 bg-black text-white flex flex-col items-center justify-center px-4">
-        <h1 className="text-2xl font-bold text-gold-400 mb-2">Գրառումը չի գտնվել</h1>
-        <p className="text-gray-400 mb-6">Ձեր հարցած հղումով գրառում չկա կամ այն հեռացվել է։</p>
+        <h1 className="text-2xl font-bold text-gold-400 mb-2">{t('blog.notFound')}</h1>
+        <p className="text-gray-400 mb-6">{t('blog.notFoundDesc')}</p>
         <Link
           to="/blog"
           className="inline-flex items-center gap-2 rounded-lg bg-gold-500 px-4 py-2 text-black font-medium hover:bg-gold-600"
         >
           <ArrowLeft className="h-4 w-4" />
-          Վերադառնալ բլոգ
+          {t('blog.backToBlog')}
         </Link>
       </div>
     );
@@ -161,7 +164,7 @@ const BlogPostPage = () => {
             
             <div className="mb-4">
               <span className="bg-gold-500/20 text-gold-400 px-3 py-1 rounded-full text-sm">
-                {post.category}
+                {getBlogCategoryLabel(post.category, t)}
               </span>
             </div>
             <h1 className="text-4xl md:text-5xl font-bold mb-6">
@@ -174,7 +177,7 @@ const BlogPostPage = () => {
               </div>
               <div className="flex items-center space-x-2">
                 <Calendar size={16} />
-                <span>{new Date(post.created_at).toLocaleDateString('hy-AM')}</span>
+                <span>{new Date(post.created_at).toLocaleDateString(locale)}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Clock size={16} />
@@ -192,13 +195,13 @@ const BlogPostPage = () => {
             <BreadcrumbList>
               <BreadcrumbItem>
                 <BreadcrumbLink asChild>
-                  <Link to="/">Գլխավոր</Link>
+                  <Link to="/">{t('header.nav.home')}</Link>
                 </BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
                 <BreadcrumbLink asChild>
-                  <Link to="/blog">Բլոգ</Link>
+                  <Link to="/blog">{t('header.nav.blog')}</Link>
                 </BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
@@ -223,7 +226,7 @@ const BlogPostPage = () => {
               <div>
                 <h4 className="text-xl font-semibold text-gold-400">{post.author}</h4>
                 <p className="text-gray-400 mt-1">
-                  Amroyan Consulting-ի առաջատար մասնագետ, {post.category} ոլորտի փորձագետ։
+                  {t('blog.authorBioPrefix')} {getBlogCategoryLabel(post.category, t)} {t('blog.authorBioSuffix')}
                 </p>
               </div>
             </CardContent>
@@ -233,7 +236,7 @@ const BlogPostPage = () => {
           {relatedPosts.length > 0 && (
             <div className="mt-16">
               <h3 className="text-3xl font-bold mb-8 text-center">
-                <span className="gradient-text">Նմանատիպ հոդվածներ</span>
+                <span className="gradient-text">{t('blog.relatedPosts')}</span>
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {relatedPosts.map((relatedPost) => (
@@ -246,7 +249,7 @@ const BlogPostPage = () => {
                         {relatedPost.excerpt}
                       </p>
                       <Button asChild variant="ghost" className="text-gold-400 hover:text-gold-300 p-0 h-auto text-sm self-start">
-                        <Link to={`/blog/${relatedPost.slug}`}>Կարդալ ավելին <ArrowRight size={14} className="ml-1" /></Link>
+                        <Link to={`/blog/${relatedPost.slug}`}>{t('blog.readMore')} <ArrowRight size={14} className="ml-1" /></Link>
                       </Button>
                     </CardContent>
                   </Card>
@@ -259,7 +262,7 @@ const BlogPostPage = () => {
             <Button asChild variant="outline" className="border-gold-500 text-gold-400 hover:bg-gold-500 hover:text-black">
               <Link to="/blog">
                 <ArrowLeft className="mr-2" size={16} />
-                Վերադառնալ բլոգ
+                {t('blog.backToBlog')}
               </Link>
             </Button>
           </div>

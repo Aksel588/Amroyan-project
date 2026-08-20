@@ -3,7 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Calculator, FileText } from 'lucide-react';
+import { FileText } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getCalculatorTranslations, Language } from '@/lib/calculatorTranslations';
 
 const POSITIONS_COUNT = 6;
 const STAMP_DUTY_PER_POSITION = 3000;
@@ -33,6 +35,10 @@ const defaultMonthly = () => Array(POSITIONS_COUNT).fill(0);
 const defaultOther = () => Array(5).fill(0);
 
 const ProjectCalculator = () => {
+  const { currentLanguage } = useLanguage();
+  const tCalc = getCalculatorTranslations(currentLanguage as Language);
+  const locale = currentLanguage === 'hy' ? 'hy-AM' : currentLanguage === 'ru' ? 'ru-RU' : 'en-US';
+
   const [state, setState] = useState<ProjectCalculatorState>({
     hourly: defaultHourly(),
     daily: defaultDaily(),
@@ -125,7 +131,7 @@ const ProjectCalculator = () => {
   }, [state]);
 
   const formatAMD = (n: number) =>
-    new Intl.NumberFormat('hy-AM', { style: 'currency', currency: 'AMD', minimumFractionDigits: 0 }).format(n || 0);
+    new Intl.NumberFormat(locale, { style: 'currency', currency: 'AMD', minimumFractionDigits: 0 }).format(n || 0);
 
   return (
     <div className="w-full max-w-6xl mx-auto space-y-6">
@@ -133,27 +139,27 @@ const ProjectCalculator = () => {
         <CardHeader>
           <CardTitle className="gradient-text text-2xl flex items-center gap-2">
             <FileText className="w-6 h-6" />
-            Նախագծերի հաշվիչ
+            {tCalc.project.title}
           </CardTitle>
           <CardDescription className="text-gray-400 bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 text-sm">
-          Հաշվիչը հնարավորություն է տալիս հաշվարկել տարբեր ծառայությունների, աշխատանքների է պրոյեկտների բյուջեն, է օգտակար կլինի ինչպես պատվիրատուների, այնպես էլ կատարողների համար: Նախագծի արժեքը հաշվարկելու համար լրացրեք աշխատավարձային մասը (հաստիքների զուտ արժեքները), այլ ծախսային հոդվածները, նշեք կազմակերպության շահույթը (mapma) Կատարողի ԱԱՀ վճարող լինելը կամ ոչ
+            {tCalc.project.infoBanner}
           </CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-8">
-          {/* Աշխատավարձային մաս */}
+          {/* Salary Section */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-white">Աշխատավարձային մաս</h3>
+            <h3 className="text-lg font-semibold text-white">{tCalc.project.salarySectionTitle}</h3>
 
-            {/* 3 columns: ժամավճար (rows 1-6), օրավճար (rows 1-6), ամսավճար/հաստիք (rows 1-6). Only blue fields are editable. */}
+            {/* 3 columns: hourly, daily, monthly */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* ժամավճար — տողեր 1-6: ժամավճար, ժամեր օրվա մեջ, օրերի քանակ ամսվա մեջ */}
+              {/* Hourly */}
               <div className="space-y-2">
-                <h4 className="text-sm font-medium text-gold-400">ԺԱՄԱՎՃԱՐ ԱՌՁԵՌՆ</h4>
+                <h4 className="text-sm font-medium text-gold-400">{tCalc.project.hourlyTitle}</h4>
                 <div className="grid grid-cols-3 gap-1 text-xs text-gray-400 mb-2">
-                  <span>ժամավճար</span>
-                  <span>ժամեր օրվա մեջ</span>
-                  <span>օրերի քանակ ամսվա մեջ</span>
+                  <span>{tCalc.project.hourlyRate}</span>
+                  <span>{tCalc.project.hourlyHoursPerDay}</span>
+                  <span>{tCalc.project.hourlyDaysPerMonth}</span>
                 </div>
                 {state.hourly.map((row, i) => (
                   <div key={i} className="grid grid-cols-3 gap-2">
@@ -180,23 +186,23 @@ const ProjectCalculator = () => {
                     />
                   </div>
                 ))}
-                <p className="text-xs text-gray-500 mt-2">Ներգև — յուրաքանչյուր հաստիքի արժեքը (ժամավճար × ժամ/օր × օր/ամիս)</p>
+                <p className="text-xs text-gray-500 mt-2">{tCalc.project.positionCostNote}</p>
                 <div className="mt-2 space-y-1">
                   {calculations.hourlyValues.map((v, i) => (
                     <div key={i} className="flex justify-between text-sm">
-                      <span className="text-gray-500">հաստիք {i + 1}</span>
+                      <span className="text-gray-500">{tCalc.project.positionLabel} {i + 1}</span>
                       <span className="text-white font-mono">{formatAMD(v)}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* օրավճար — տողեր 1-6: օրավճար, օրերի քանակ ամսվա մեջ */}
+              {/* Daily */}
               <div className="space-y-2">
-                <h4 className="text-sm font-medium text-gold-400">ՕՐԱՎՃԱՐ ԱՌՁԵՌՆ</h4>
+                <h4 className="text-sm font-medium text-gold-400">{tCalc.project.dailyTitle}</h4>
                 <div className="grid grid-cols-2 gap-1 text-xs text-gray-400 mb-2">
-                  <span>օրավճար</span>
-                  <span>օրերի քանակ ամսվա մեջ</span>
+                  <span>{tCalc.project.dailyRate}</span>
+                  <span>{tCalc.project.dailyDaysPerMonth}</span>
                 </div>
                 {state.daily.map((row, i) => (
                   <div key={i} className="grid grid-cols-2 gap-2">
@@ -216,24 +222,24 @@ const ProjectCalculator = () => {
                     />
                   </div>
                 ))}
-                <p className="text-xs text-gray-500 mt-2">Ներգև — յուրաքանչյուր հաստիքի արժեքը (օրավճար × օր/ամիս)</p>
+                <p className="text-xs text-gray-500 mt-2">{tCalc.project.positionCostNote}</p>
                 <div className="mt-2 space-y-1">
                   {calculations.dailyValues.map((v, i) => (
                     <div key={i} className="flex justify-between text-sm">
-                      <span className="text-gray-500">հաստիք {i + 1}</span>
+                      <span className="text-gray-500">{tCalc.project.positionLabel} {i + 1}</span>
                       <span className="text-white font-mono">{formatAMD(v)}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* ամսավճար/հաստիք — տողեր 1-6: ամսական հաստիք (միայն 1 դաշտ) */}
+              {/* Monthly */}
               <div className="space-y-2">
-                <h4 className="text-sm font-medium text-gold-400">ՀԱՍՏԻՔ (ԱՄՍԱՎՃԱՐ) ԱՌՁԵՌՆ</h4>
-                <div className="text-xs text-gray-400 mb-2">ամսավճար / հաստիք</div>
+                <h4 className="text-sm font-medium text-gold-400">{tCalc.project.monthlyTitle}</h4>
+                <div className="text-xs text-gray-400 mb-2">{tCalc.project.monthlyRate}</div>
                 {[0, 1, 2, 3, 4, 5].map(i => (
                   <div key={i}>
-                    <Label className="text-gray-500 text-xs">հաստիք {i + 1}</Label>
+                    <Label className="text-gray-500 text-xs">{tCalc.project.positionLabel} {i + 1}</Label>
                     <Input
                       type="number"
                       value={state.monthly[i] || ''}
@@ -243,11 +249,11 @@ const ProjectCalculator = () => {
                     />
                   </div>
                 ))}
-                <p className="text-xs text-gray-500 mt-2">Ներգև — արտացոլվում է վերևի տողի հաստիք արժեքը</p>
+                <p className="text-xs text-gray-500 mt-2">{tCalc.project.positionCostNote}</p>
                 <div className="mt-2 space-y-1">
                   {calculations.monthlyValues.map((v, i) => (
                     <div key={i} className="flex justify-between text-sm">
-                      <span className="text-gray-500">հաստիք {i + 1}</span>
+                      <span className="text-gray-500">{tCalc.project.positionLabel} {i + 1}</span>
                       <span className="text-white font-mono">{formatAMD(v)}</span>
                     </div>
                   ))}
@@ -255,54 +261,54 @@ const ProjectCalculator = () => {
               </div>
             </div>
 
-            {/* Հաստիքների քանակ, արժեքներ, Ընդամենը */}
+            {/* Stats */}
             <div className="bg-gray-800/50 rounded-lg p-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
               <div>
-                <p className="text-gray-400">հաստիքներ քանակ</p>
+                <p className="text-gray-400">{tCalc.project.statsPositionsCount}</p>
                 <p className="text-white font-mono">{calculations.hourlyCount} / {calculations.dailyCount} / {calculations.monthlyCount}</p>
               </div>
               <div>
-                <p className="text-gray-400">հաստիքների արժեքներ</p>
+                <p className="text-gray-400">{tCalc.project.statsPositionsValues}</p>
                 <p className="text-white font-mono">{formatAMD(calculations.hourlySum)} / {formatAMD(calculations.dailySum)} / {formatAMD(calculations.monthlySum)}</p>
               </div>
               <div>
-                <p className="text-gray-400">Ընդամենը հաստիքների քանակ</p>
+                <p className="text-gray-400">{tCalc.project.totalPositionsCountLabel}</p>
                 <p className="text-white font-semibold">{calculations.totalPositionsCount}</p>
               </div>
               <div>
-                <p className="text-gray-400">Ընդամենը աշխատավարձային ֆոնդ առձեռն</p>
+                <p className="text-gray-400">{tCalc.project.totalSalaryFundNetLabel}</p>
                 <p className="text-white font-semibold">{formatAMD(calculations.totalSalaryFundNet)}</p>
               </div>
             </div>
 
-            {/* Եկամտային հարկ, Սոցիալական վճար, Դրոշմանիշային վճար, Ընդամենը աշխատավարձ հարկերով */}
+            {/* Taxes */}
             <div className="bg-gray-800/50 rounded-lg p-4 grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
               <div>
-                <p className="text-gray-400">Եկամտային հարկ</p>
+                <p className="text-gray-400">{tCalc.project.incomeTaxLabel}</p>
                 <p className="text-red-400 font-mono">{formatAMD(calculations.incomeTax)}</p>
               </div>
               <div>
-                <p className="text-gray-400">Սոցիալական վճար</p>
+                <p className="text-gray-400">{tCalc.project.socialContributionLabel}</p>
                 <p className="text-red-400 font-mono">{formatAMD(calculations.socialContribution)}</p>
               </div>
               <div>
-                <p className="text-gray-400">Դրոշմանիշային վճար</p>
+                <p className="text-gray-400">{tCalc.project.stampDutyLabel}</p>
                 <p className="text-red-400 font-mono">{formatAMD(calculations.stampDuty)} ({calculations.totalPositionsCount} × 3000)</p>
               </div>
               <div>
-                <p className="text-gray-400">Ընդամենը աշխատավարձ հարկերով</p>
+                <p className="text-gray-400">{tCalc.project.totalSalaryWithTaxesLabel}</p>
                 <p className="text-white font-semibold">{formatAMD(calculations.totalSalaryWithTaxes)}</p>
               </div>
             </div>
           </div>
 
-          {/* Այլ ծախսեր */}
+          {/* Other Expenses */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-white">Այլ ծախսեր</h3>
+            <h3 className="text-lg font-semibold text-white">{tCalc.project.otherExpensesSectionTitle}</h3>
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
               {state.otherExpenses.map((val, i) => (
                 <div key={i}>
-                  <Label className="text-gold-400">Այլ ծախսեր {i + 1} *</Label>
+                  <Label className="text-gold-400">{tCalc.project.otherExpenseLabel} {i + 1} *</Label>
                   <Input
                     type="number"
                     value={val || ''}
@@ -314,22 +320,22 @@ const ProjectCalculator = () => {
               ))}
             </div>
             <div>
-              <Label className="text-gray-400">Ծախսեր, բացատրություն</Label>
+              <Label className="text-gray-400">{tCalc.project.otherExpensesCommentLabel}</Label>
               <Input
                 type="text"
                 value={state.otherExpensesComment}
                 onChange={e => setState(s => ({ ...s, otherExpensesComment: e.target.value }))}
                 className="bg-gray-800 border-gray-600 text-white mt-1"
-                placeholder="Մեկնաբանություն (ըստ ցանկության)"
+                placeholder={tCalc.project.otherExpensesCommentPlaceholder}
               />
             </div>
           </div>
 
-          {/* Կազմակերպության շահույթ, Ընդհանուր ծառայության արժեքը, ԱԱՀ, Ընդամենը արժեք */}
+          {/* Profit, Service Cost, VAT, Total */}
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label className="text-gold-400">Կազմակերպության շահույթ, տոկոս</Label>
+                <Label className="text-gold-400">{tCalc.project.profitPercentLabel}</Label>
                 <Input
                   type="number"
                   value={state.profitPercent ?? ''}
@@ -339,28 +345,28 @@ const ProjectCalculator = () => {
                 />
               </div>
               <div>
-                <p className="text-gray-400">Կազմակերպության շահույթ, դրամով</p>
+                <p className="text-gray-400">{tCalc.project.profitAmountLabel}</p>
                 <p className="text-green-400 font-semibold text-lg mt-1">{formatAMD(calculations.profitValue)}</p>
               </div>
             </div>
 
             <div className="bg-gray-800/50 rounded-lg p-4">
-              <p className="text-gray-400 text-sm">Ընդհանուր ծառայության արժեքը, ներառյալ հարկեր</p>
+              <p className="text-gray-400 text-sm">{tCalc.project.serviceCostInclTaxesLabel}</p>
               <p className="text-xl font-bold text-white mt-1">{formatAMD(calculations.serviceCostInclTaxes)}</p>
-              <p className="text-xs text-gray-500 mt-1">(Ընդ. աշխատավարձ հարկերով + այլ ծախսեր 1–5 + շահույթ դրամով × 0.82)</p>
+              <p className="text-xs text-gray-500 mt-1">{tCalc.project.serviceCostFormula}</p>
             </div>
 
             <div className="flex flex-wrap items-center gap-6">
               <div className="flex items-center gap-3">
                 <Switch checked={state.vatPayer} onCheckedChange={c => setState(s => ({ ...s, vatPayer: c }))} />
-                <Label className="text-gold-400">ԱԱՀ վճարող (այո/ոչ)</Label>
+                <Label className="text-gold-400">{tCalc.project.vatPayerLabel}</Label>
               </div>
               <div>
-                <p className="text-gray-400 text-sm">ԱԱՀ, 20 տոկոս</p>
+                <p className="text-gray-400 text-sm">{tCalc.project.vatAmountLabel}</p>
                 <p className="text-white font-mono">{formatAMD(calculations.vat)}</p>
               </div>
               <div className="flex-1">
-                <p className="text-gray-400 text-sm">Ընդամենը արժեք</p>
+                <p className="text-gray-400 text-sm">{tCalc.project.finalTotalLabel}</p>
                 <p className="text-2xl font-bold text-gold-400">{formatAMD(calculations.finalTotal)}</p>
               </div>
             </div>

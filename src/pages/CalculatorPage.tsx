@@ -5,6 +5,8 @@ import { getCalculatorBySlug } from '@/data/calculators';
 import LoadingPage from '@/components/LoadingPage';
 import NotFound from '@/pages/NotFound';
 import DynamicIcon from '@/components/ui/DynamicIcon';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getCalculatorTranslations, Language } from '@/lib/calculatorTranslations';
 
 // Import specific calculator components
 import SalaryCalculator from '@/components/calculators/SalaryCalculator';
@@ -13,15 +15,22 @@ import ProjectCalculator from '@/components/calculators/ProjectCalculator';
 import TurnoverTaxCalculator from '@/components/calculators/TurnoverTaxCalculator';
 import ArmenianTaxCalculator from '@/components/calculators/ArmenianTaxCalculator';
 import ArmenianPayrollCalculator from '@/components/calculators/ArmenianPayrollCalculator';
-import ProfitTaxCalculator from '@/pages/calculators/ProfitTax';
-import BenefitCalculator from '@/pages/calculators/Benefit';
-import VATCalculator from '@/pages/calculators/VAT';
+import BenefitCalculator from '@/components/calculators/BenefitCalculator';
 import EstimateCalculator from '@/components/calculators/EstimateCalculator';
 
 const CalculatorPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const { currentLanguage } = useLanguage();
+  const tCalc = getCalculatorTranslations(currentLanguage as Language);
+
+  const matchedCard = tCalc.cards.find(c => c.slug === slug);
+  const staticCalc = slug ? getCalculatorBySlug(slug) : null;
+
+  const title = matchedCard?.title || staticCalc?.title || '';
+  const description = matchedCard?.desc || staticCalc?.description || '';
+  const iconName = matchedCard?.icon_name || staticCalc?.icon_name || 'Calculator';
 
   useEffect(() => {
     if (!slug) {
@@ -30,21 +39,16 @@ const CalculatorPage = () => {
       return;
     }
 
-    // Get calculator from static data
-    const calculator = getCalculatorBySlug(slug);
-    
-    if (calculator) {
-      // Set page title and meta description
-      document.title = `${calculator.title} — Հաշվիչ | Amroyan Consulting`;
+    if (matchedCard || staticCalc) {
+      document.title = `${title} | Amroyan Consulting`;
       let meta = document.querySelector('meta[name="description"]');
       if (!meta) {
         meta = document.createElement('meta');
         meta.setAttribute('name', 'description');
         document.head.appendChild(meta);
       }
-      meta.setAttribute('content', calculator.description || `${calculator.title} հաշվիչ`);
+      meta.setAttribute('content', description);
       
-      // Set canonical URL
       let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
       if (!canonical) {
         canonical = document.createElement('link');
@@ -52,30 +56,22 @@ const CalculatorPage = () => {
         document.head.appendChild(canonical);
       }
       canonical.setAttribute('href', `${window.location.origin}/calculators/${slug}`);
+      setNotFound(false);
     } else {
       setNotFound(true);
     }
     
     setLoading(false);
-  }, [slug]);
+  }, [slug, title, description, matchedCard, staticCalc]);
 
-  // Show loading while fetching
   if (loading) {
     return <LoadingPage />;
   }
 
-  // Show 404 if calculator not found
-  if (notFound) {
+  if (notFound || (!matchedCard && !staticCalc)) {
     return <NotFound />;
   }
 
-  // Get calculator from static data
-  const calculator = getCalculatorBySlug(slug!);
-  if (!calculator) {
-    return <NotFound />;
-  }
-
-  // Render the appropriate calculator component based on slug
   const renderCalculatorComponent = () => {
     switch (slug) {
       case 'salary':
@@ -90,28 +86,21 @@ const CalculatorPage = () => {
         return <ArmenianTaxCalculator />;
       case 'armenian-payroll':
         return <ArmenianPayrollCalculator />;
-      case 'profit-tax':
-        return <ProfitTaxCalculator />;
       case 'benefit':
         return <BenefitCalculator />;
-      case 'vat':
-        return <VATCalculator />;
       default:
         return (
           <Card className="bg-gray-900/50 border-gold-500/20">
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-gold-500 to-gold-600 flex items-center justify-center">
-                  <DynamicIcon name={calculator.icon_name as any} className="text-black" size={20} />
+                  <DynamicIcon name={iconName as any} className="text-black" size={20} />
                 </div>
-                {calculator.title}
+                {title}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-300 mb-6">{calculator.description}</p>
-              <div className="text-center text-gray-400 py-8">
-                Այս հաշվիչը շուտով կլինի հասանելի
-              </div>
+              <p className="text-gray-300 mb-6">{description}</p>
             </CardContent>
           </Card>
         );
@@ -125,12 +114,12 @@ const CalculatorPage = () => {
           <header className="max-w-3xl mx-auto text-center mb-10 sm:mb-14">
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold gradient-text flex items-center justify-center gap-4">
               <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-gold-500 to-gold-600 flex items-center justify-center">
-                <DynamicIcon name={calculator.icon_name as any} className="text-black" size={28} />
+                <DynamicIcon name={iconName as any} className="text-black" size={28} />
               </div>
-              {calculator.title}
+              {title}
             </h1>
-            {calculator.description && (
-              <p className="text-xl text-gray-300 mt-6">{calculator.description}</p>
+            {description && (
+              <p className="text-xl text-gray-300 mt-6">{description}</p>
             )}
           </header>
           

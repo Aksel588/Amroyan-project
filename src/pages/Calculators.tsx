@@ -8,15 +8,17 @@ import { Link } from 'react-router-dom';
 import { useEffect, useState, useMemo } from 'react';
 import { laravelApi } from '@/integrations/laravel/client';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { getCalculatorTranslations, Language } from '@/lib/calculatorTranslations';
 import DynamicIcon from '@/components/ui/DynamicIcon';
 import NetworkAnimation from '@/components/NetworkAnimation';
 
 const Calculators = () => {
   const { t, currentLanguage } = useLanguage();
+  const tCalc = getCalculatorTranslations(currentLanguage as Language);
 
   useEffect(() => {
-    document.title = t('calculators.metaTitle');
-    const desc = t('calculators.metaDescription');
+    document.title = tCalc.metaTitle;
+    const desc = tCalc.metaDesc;
     let meta = document.querySelector('meta[name="description"]');
     if (!meta) {
       meta = document.createElement('meta');
@@ -31,7 +33,7 @@ const Calculators = () => {
       document.head.appendChild(canonical);
     }
     canonical.setAttribute('href', window.location.origin + '/calculators');
-  }, [t, currentLanguage]);
+  }, [tCalc]);
 
   const [items, setItems] = useState<Array<{ title: string; to: string; icon_name: string; desc: string; category?: string; tags?: string[] }>>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -41,94 +43,55 @@ const Calculators = () => {
   const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
+    // Default 5 core calculators localized
+    const defaultCards = tCalc.cards.map(c => ({
+      title: c.title,
+      to: `/calculators/${c.slug}`,
+      icon_name: c.icon_name || 'Calculator',
+      desc: c.desc,
+      category: c.category || 'tax',
+      tags: c.tags || []
+    }));
+
     // Fetch visible calculators from Laravel API
     const fetchCalculators = async () => {
       try {
         const response = await laravelApi.getCalculators();
         const data = response.data || [];
-        console.log('API Response:', response);
-        console.log('Calculators data:', data);
-        
-        const apiItems = data
-          .map((d: any) => {
-            const slug = d.slug || '';
-            const to = `/calculators/${slug}`;
-            let title = d.title || '';
-            let desc = d.description || '';
+        if (data.length > 0) {
+          const apiItems = data
+            .map((d: any) => {
+              const slug = d.slug || '';
+              const to = `/calculators/${slug}`;
+              const matchedLocal = tCalc.cards.find(c => c.slug === slug);
+              let title = matchedLocal?.title || d.title || '';
+              let desc = matchedLocal?.desc || d.description || '';
 
-            // Keep core tax calculator cards consistent even if admin content is mismatched.
-            if (slug === 'profit-tax') {
-              title = 'Շահութահարկի հաշվիչ';
-              if (!desc) desc = 'Հաշվեք շահութահարկը ձեր շահույթի համար';
-            }
-            if (slug === 'armenian-tax') {
-              title = 'Շահութահարկի հաշվիչ';
-              if (!desc) {
-                desc = 'Հաշվեք շահութահարկը՝ եկամուտներ, ծախսեր, կորուստներ, նվազեցումներ և հարկվող շահույթ՝ 79 տողի ամբողջական հարկային աղյուսակով';
-              }
-            }
-
-            return {
-              title,
-              to,
-              icon_name: d.icon_name || 'Calculator',
-              desc,
-              category: d.category || 'general',
-              tags: d.tags || []
-            };
-          })
-          .filter((item: { to: string }) => item.to !== '/calculators/comprehensive-salary' && item.to !== '/calculators/armenian-payroll');
-        console.log('Processed items:', apiItems);
-        setItems(apiItems);
+              return {
+                title,
+                to,
+                icon_name: d.icon_name || 'Calculator',
+                desc,
+                category: d.category || matchedLocal?.category || 'general',
+                tags: matchedLocal?.tags || d.tags || []
+              };
+            })
+            .filter((item: { to: string }) => 
+              item.to !== '/calculators/comprehensive-salary' && 
+              item.to !== '/calculators/armenian-payroll' &&
+              item.to !== '/calculators/vat' &&
+              item.to !== '/calculators/profit-tax'
+            );
+          setItems(apiItems.length > 0 ? apiItems : defaultCards);
+        } else {
+          setItems(defaultCards);
+        }
       } catch (error) {
-        console.error('Error fetching calculators:', error);
-        // Fallback to default calculators if API fails
-        setItems([
-          {
-            title: 'Աշխատավարձի հաշվիչ',
-            to: '/calculators/salary',
-            icon_name: 'Calculator',
-            desc: 'Աշխատավարձի հաշվիչը հնարավորություն է տալիս պարզ և մատչելի կերպով հաշվարկել աշխատավարձի չափը, հարկերը և այլ վճարների չափերը։',
-            category: 'salary',
-            tags: ['աշխատավարձ', 'հարկ', 'կուտակային', 'դրոշմանիշ']
-          },
-          {
-            title: 'Նախագծերի հաշվիչ',
-            to: '/calculators/estimate',
-            icon_name: 'Calculator',
-            desc: 'Հաշվիչը հնարավորություն է տալիս հաշվարկել տարբեր ծառայությունների, աշխատանքների և պրոյեկտների բյուջեն՝ ինչպես պատվիրատուների, այնպես էլ կատարողների համար։',
-            category: 'project',
-            tags: ['նախագիծ', 'արժեք', 'գնահատում', 'սմետա']
-          },
-          {
-            title: 'Շրջհարկի հաշվիչ',
-            to: '/calculators/turnover-tax',
-            icon_name: 'Calculator',
-            desc: 'Շրջանառության հարկի հաշվիչը հնարավորություն է տալիս հաշվարկել կազմակերպության կամ ԱՁ-ի եռամսյակային շրջանառության հարկը: Տող 1-5 համար լրացվում է շրջանառության ծավալը, գործունեության հետ անմիջականորեն կապ ունեցող ծախս (ինքնարժեք) ...',
-            category: 'tax',
-            tags: ['շրջանառություն', 'հարկ', 'եռամսյակ', 'գործունեություն']
-          },
-          {
-            title: 'Շահութահարկի հաշվիչ',
-            to: '/calculators/armenian-tax',
-            icon_name: 'Calculator',
-            desc: 'Հաշվեք շահութահարկը՝ եկամուտներ, ծախսեր, կորուստներ, նվազեցումներ և հարկվող շահույթ՝ 79 տողի ամբողջական հարկային աղյուսակով',
-            category: 'tax',
-            tags: ['հայաստան', 'հարկային', 'շահութահարկ', 'եկամուտ', 'ծախս']
-          },
-          {
-            title: 'Նպաստի հաշվիչ',
-            to: '/calculators/benefit',
-            icon_name: 'Calculator',
-            desc: 'Հաշվեք տարբեր տեսակի նպաստները՝ երեխայի խնամք, հիվանդություն, ծննդաբերություն և այլն',
-            category: 'benefits',
-            tags: ['նպաստ', 'երեխա', 'հիվանդություն', 'ծննդաբերություն']
-          }
-        ]);
+        setItems(defaultCards);
       }
     };
     fetchCalculators();
-  }, []);
+  }, [currentLanguage, tCalc]);
 
   const featuresData = (() => {
     const f = t('calculators.features') as unknown;
@@ -215,15 +178,15 @@ const Calculators = () => {
       <NetworkAnimation />
       
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center network-bg overflow-hidden pt-28 sm:pt-32 lg:pt-36 pb-16 sm:pb-20">
+      <section className="relative min-h-screen flex items-center justify-center network-bg overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/60 to-black/80" />
         
         <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="max-w-4xl mx-auto animate-fade-in-up">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl mb-4 sm:mb-6 font-bold leading-normal sm:leading-tight lg:leading-snug">
-              <span className="gradient-text inline-block font-semibold py-1 leading-normal sm:leading-tight lg:leading-snug">{t('calculators.heroTitle')}</span>
+            <h1 className="text-4xl sm:text-5xl md:text-6xl mb-4 sm:mb-6 leading-tight font-bold lg:text-5xl">
+              <span className="gradient-text py-0 px-0 mx-0 my-[8px] font-semibold leading-relaxed">{t('calculators.heroTitle')}</span>
             </h1>
-            <p className="text-lg text-gray-300 mb-6 sm:mb-8 my-0 py-4 sm:text-2xl leading-relaxed">
+            <p className="text-lg text-gray-300 mb-6 sm:mb-8 my-0 py-[20px] sm:text-2xl">
               {t('calculators.heroSubtitle')}
             </p>
 

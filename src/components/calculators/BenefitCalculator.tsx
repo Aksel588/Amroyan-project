@@ -7,6 +7,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getCalculatorTranslations, Language } from '@/lib/calculatorTranslations';
 
 const formSchema = z.object({
   benefitType: z.enum(['childCare', 'sickLeave', 'maternity', 'unemployment', 'disability']).default('childCare'),
@@ -16,9 +18,11 @@ const formSchema = z.object({
   hasInsurance: z.boolean().default(true),
 });
 
-type BenefitType = z.infer<typeof formSchema>['benefitType'];
-
 const BenefitCalculator = () => {
+  const { currentLanguage } = useLanguage();
+  const tCalc = getCalculatorTranslations(currentLanguage as Language);
+  const locale = currentLanguage === 'hy' ? 'hy-AM' : currentLanguage === 'ru' ? 'ru-RU' : 'en-US';
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     mode: 'onChange',
@@ -46,11 +50,11 @@ const BenefitCalculator = () => {
         if (values.childAge && values.childAge < 3) {
           benefitAmount = dailyRate * values.daysCount * 0.4; // 40% for children under 3
           maxBenefit = 50000 * values.daysCount / 30; // Max 50,000 AMD per month
-          description = 'Երեխայի խնամքի նպաստ (3 տարեկանից փոքր)';
+          description = tCalc.benefit.descriptions.childCareUnder3;
         } else {
           benefitAmount = dailyRate * values.daysCount * 0.3; // 30% for children 3-18
           maxBenefit = 40000 * values.daysCount / 30; // Max 40,000 AMD per month
-          description = 'Երեխայի խնամքի նպաստ (3-18 տարեկան)';
+          description = tCalc.benefit.descriptions.childCareOver3;
         }
         break;
 
@@ -58,30 +62,30 @@ const BenefitCalculator = () => {
         if (values.hasInsurance) {
           benefitAmount = dailyRate * values.daysCount * 0.8; // 80% with insurance
           maxBenefit = 100000 * values.daysCount / 30; // Max 100,000 AMD per month
-          description = 'Հիվանդության նպաստ (ապահովագրությամբ)';
+          description = tCalc.benefit.descriptions.sickLeaveInsured;
         } else {
           benefitAmount = dailyRate * values.daysCount * 0.6; // 60% without insurance
           maxBenefit = 80000 * values.daysCount / 30; // Max 80,000 AMD per month
-          description = 'Հիվանդության նպաստ (առանց ապահովագրության)';
+          description = tCalc.benefit.descriptions.sickLeaveUninsured;
         }
         break;
 
       case 'maternity':
         benefitAmount = dailyRate * values.daysCount * 1.0; // 100% for maternity
         maxBenefit = 150000 * values.daysCount / 30; // Max 150,000 AMD per month
-        description = 'Ծննդաբերության նպաստ';
+        description = tCalc.benefit.descriptions.maternity;
         break;
 
       case 'unemployment':
         benefitAmount = dailyRate * values.daysCount * 0.5; // 50% for unemployment
         maxBenefit = 60000 * values.daysCount / 30; // Max 60,000 AMD per month
-        description = 'Գործազրկության նպաստ';
+        description = tCalc.benefit.descriptions.unemployment;
         break;
 
       case 'disability':
         benefitAmount = dailyRate * values.daysCount * 0.7; // 70% for disability
         maxBenefit = 120000 * values.daysCount / 30; // Max 120,000 AMD per month
-        description = 'Հաշմանդամության նպաստ';
+        description = tCalc.benefit.descriptions.disability;
         break;
     }
 
@@ -98,16 +102,17 @@ const BenefitCalculator = () => {
       netBenefit,
       description
     };
-  }, [values, form.formState.isValid]);
+  }, [values, form.formState.isValid, tCalc]);
 
-  const formatAMD = (amount: number) => new Intl.NumberFormat('hy-AM', { style: 'currency', currency: 'AMD', minimumFractionDigits: 0 }).format(amount);
+  const formatAMD = (amount: number) => 
+    new Intl.NumberFormat(locale, { style: 'currency', currency: 'AMD', minimumFractionDigits: 0 }).format(amount);
 
   return (
     <Card className="w-full max-w-3xl mx-auto bg-gradient-to-b from-gray-900 to-black border-gold-500/20">
       <CardHeader>
-        <CardTitle className="gradient-text">Նպաստի հաշվիչ</CardTitle>
+        <CardTitle className="gradient-text">{tCalc.benefit.title}</CardTitle>
         <CardDescription className="text-gray-400">
-          Հաշվեք տարբեր տեսակի նպաստները՝ երեխայի խնամք, հիվանդություն, ծննդաբերություն, գործազրկություն և հաշմանդամություն
+          {tCalc.benefit.description}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -118,19 +123,19 @@ const BenefitCalculator = () => {
               name="benefitType"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gold-400">Նպաստի տեսակ</FormLabel>
+                  <FormLabel className="text-gold-400">{tCalc.benefit.typeLabel}</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
-                        <SelectValue placeholder="Ընտրեք նպաստի տեսակը" />
+                        <SelectValue placeholder={tCalc.benefit.typeLabel} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="childCare">Երեխայի խնամք</SelectItem>
-                      <SelectItem value="sickLeave">Հիվանդության նպաստ</SelectItem>
-                      <SelectItem value="maternity">Ծննդաբերության նպաստ</SelectItem>
-                      <SelectItem value="unemployment">Գործազրկության նպաստ</SelectItem>
-                      <SelectItem value="disability">Հաշմանդամության նպաստ</SelectItem>
+                      <SelectItem value="childCare">{tCalc.benefit.types.childCare}</SelectItem>
+                      <SelectItem value="sickLeave">{tCalc.benefit.types.sickLeave}</SelectItem>
+                      <SelectItem value="maternity">{tCalc.benefit.types.maternity}</SelectItem>
+                      <SelectItem value="unemployment">{tCalc.benefit.types.unemployment}</SelectItem>
+                      <SelectItem value="disability">{tCalc.benefit.types.disability}</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -143,9 +148,9 @@ const BenefitCalculator = () => {
               name="baseSalary"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gold-400">Հիմնական աշխատավարձ (AMD)</FormLabel>
+                  <FormLabel className="text-gold-400">{tCalc.benefit.salaryLabel}</FormLabel>
                   <FormControl>
-                    <Input type="number" placeholder="Օրինակ՝ 300000" {...field} className="bg-gray-800 border-gray-700 text-white" />
+                    <Input type="number" placeholder={tCalc.benefit.salaryPlaceholder} {...field} className="bg-gray-800 border-gray-700 text-white" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -157,9 +162,9 @@ const BenefitCalculator = () => {
               name="daysCount"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gold-400">Օրերի քանակ</FormLabel>
+                  <FormLabel className="text-gold-400">{tCalc.benefit.daysLabel}</FormLabel>
                   <FormControl>
-                    <Input type="number" placeholder="Օրինակ՝ 30" {...field} className="bg-gray-800 border-gray-700 text-white" />
+                    <Input type="number" placeholder={tCalc.benefit.daysPlaceholder} {...field} className="bg-gray-800 border-gray-700 text-white" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -172,9 +177,9 @@ const BenefitCalculator = () => {
                 name="childAge"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gold-400">Երեխայի տարիք</FormLabel>
+                    <FormLabel className="text-gold-400">{tCalc.benefit.childAgeLabel}</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="Օրինակ՝ 3" {...field} className="bg-gray-800 border-gray-700 text-white" />
+                      <Input type="number" placeholder={tCalc.benefit.childAgePlaceholder} {...field} className="bg-gray-800 border-gray-700 text-white" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -192,8 +197,8 @@ const BenefitCalculator = () => {
                       <Switch checked={field.value} onCheckedChange={field.onChange} />
                     </FormControl>
                     <div>
-                      <FormLabel className="text-gold-400">Ապահովագրություն</FormLabel>
-                      <div className="text-xs text-gray-400">Ունե՞ք ապահովագրություն</div>
+                      <FormLabel className="text-gold-400">{tCalc.benefit.insuranceLabel}</FormLabel>
+                      <div className="text-xs text-gray-400">{tCalc.benefit.insuranceDesc}</div>
                     </div>
                   </FormItem>
                 )}
@@ -204,33 +209,33 @@ const BenefitCalculator = () => {
 
         {results && (
           <div className="mt-8 pt-6 border-t border-gray-800 space-y-4 animate-fade-in-up">
-            <h3 className="text-xl font-bold text-white text-center">Հաշվարկի արդյունքներ</h3>
+            <h3 className="text-xl font-bold text-white text-center">{tCalc.resultsTitle}</h3>
             <div className="bg-blue-600/20 border border-blue-500/50 p-4 rounded-md text-center mb-4">
               <p className="text-lg text-blue-300">{results.description}</p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-white">
               <div className="bg-gray-800 p-4 rounded-md">
-                <p className="text-sm text-gray-400">Օրական դրույքաչափ</p>
+                <p className="text-sm text-gray-400">{tCalc.benefit.dailyRateLabel}</p>
                 <p className="text-lg font-semibold text-blue-400">{formatAMD(results.dailyRate)}</p>
               </div>
               <div className="bg-gray-800 p-4 rounded-md">
-                <p className="text-sm text-gray-400">Հաշվարկված նպաստ</p>
+                <p className="text-sm text-gray-400">{tCalc.benefit.calculatedBenefitLabel}</p>
                 <p className="text-lg font-semibold text-blue-400">{formatAMD(results.benefitAmount)}</p>
               </div>
               <div className="bg-gray-800 p-4 rounded-md">
-                <p className="text-sm text-gray-400">Առավելագույն նպաստ</p>
+                <p className="text-sm text-gray-400">{tCalc.benefit.maxBenefitLabel}</p>
                 <p className="text-lg font-semibold text-blue-400">{formatAMD(results.maxBenefit)}</p>
               </div>
               <div className="bg-gray-800 p-4 rounded-md">
-                <p className="text-sm text-gray-400">Եկամտային հարկ (20%)</p>
+                <p className="text-sm text-gray-400">{tCalc.benefit.taxDeductionLabel}</p>
                 <p className="text-lg font-semibold text-red-400">- {formatAMD(results.taxDeduction)}</p>
               </div>
               <div className="bg-green-600/20 border border-green-500/50 p-4 rounded-md sm:col-span-2 text-center">
-                <p className="text-lg text-green-300">Մաքուր նպաստ</p>
+                <p className="text-lg text-green-300">{tCalc.benefit.netBenefitLabel}</p>
                 <p className="text-3xl font-bold text-green-400">{formatAMD(results.netBenefit)}</p>
               </div>
             </div>
-            <p className="text-xs text-muted-foreground text-center pt-2">* Հաշվարկները հիմնված են Հայաստանի Հանրապետության օրենսդրության վրա</p>
+            <p className="text-xs text-muted-foreground text-center pt-2">{tCalc.benefit.note}</p>
           </div>
         )}
       </CardContent>

@@ -1,24 +1,24 @@
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Calculator, FileText, TrendingUp, TrendingDown, Minus, Search, Filter, X, SortAsc, SortDesc, Eye, EyeOff } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { FileText, Search, Filter, X, SortAsc, SortDesc } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getCalculatorTranslations, Language } from '@/lib/calculatorTranslations';
 
 interface TaxRow {
   id: string;
   number: number;
   name: string;
   value: number;
-  isSubtotal?: boolean;
-  parentRows?: number[];
   isCalculated?: boolean;
-  formula?: string;
+  isSubtotal?: boolean;
+  section?: 'incomes' | 'expenses' | 'losses' | 'reductions' | 'calculations';
   category?: string;
-  section?: string;
+  description?: string;
 }
 
 interface CalculationResults {
@@ -313,7 +313,7 @@ const ArmenianTaxCalculator = () => {
   }, [rows]);
 
   const formatAMD = (amount: number) => 
-    new Intl.NumberFormat('hy-AM', { 
+    new Intl.NumberFormat(locale, { 
       style: 'currency', 
       currency: 'AMD', 
       minimumFractionDigits: 0 
@@ -356,22 +356,24 @@ const ArmenianTaxCalculator = () => {
         <CardHeader>
           <CardTitle className="gradient-text text-2xl flex items-center gap-2">
             <FileText className="w-6 h-6" />
-            Շահութահարկի հաշվիչ
+            {tCalc.armenianTax.title}
           </CardTitle>
           <CardDescription className="text-gray-400">
-            Հաշվեք շահութահարկը՝ եկամուտներ, ծախսեր, կորուստներ, նվազեցումներ և հարկվող շահույթ
+            {tCalc.armenianTax.description}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Instructions */}
           <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
-            <h3 className="text-lg font-semibold text-blue-400 mb-2">Հաշվարկի կարգ</h3>
+            <h3 className="text-lg font-semibold text-blue-400 mb-2">
+              {currentLanguage === 'hy' ? 'Հաշվարկի կարգ' : currentLanguage === 'ru' ? 'Порядок расчета' : 'Calculation Order'}
+            </h3>
             <div className="text-sm text-gray-300 space-y-1">
-              <p>• <strong>Եկամուտներ (1-24):</strong> Մուտքագրեք բոլոր տեսակի եկամուտները</p>
-              <p>• <strong>Ծախսեր (25-45):</strong> Մուտքագրեք բոլոր ծախսերը</p>
-              <p>• <strong>Կորուստներ (46-50):</strong> Մուտքագրեք կորուստները</p>
-              <p>• <strong>Նվազեցումներ (51-66):</strong> Մուտքագրեք նվազեցումները</p>
-              <p>• <strong>Հաշվարկներ (67-79):</strong> Ավտոմատ հաշվարկվում են</p>
+              <p>• <strong>{currentLanguage === 'hy' ? 'Եկամուտներ (1-24):' : currentLanguage === 'ru' ? 'Доходы (1-24):' : 'Revenues (1-24):'}</strong> {currentLanguage === 'hy' ? 'Մուտքագրեք բոլոր տեսակի եկամուտները' : currentLanguage === 'ru' ? 'Введите все виды доходов' : 'Enter all revenues'}</p>
+              <p>• <strong>{currentLanguage === 'hy' ? 'Ծախսեր (25-45):' : currentLanguage === 'ru' ? 'Расходы (25-45):' : 'Expenses (25-45):'}</strong> {currentLanguage === 'hy' ? 'Մուտքագրեք բոլոր ծախսերը' : currentLanguage === 'ru' ? 'Введите все расходы' : 'Enter all expenses'}</p>
+              <p>• <strong>{currentLanguage === 'hy' ? 'Կորուստներ (46-50):' : currentLanguage === 'ru' ? 'Убытки (46-50):' : 'Losses (46-50):'}</strong> {currentLanguage === 'hy' ? 'Մուտքագրեք կորուստները' : currentLanguage === 'ru' ? 'Введите убытки' : 'Enter losses'}</p>
+              <p>• <strong>{currentLanguage === 'hy' ? 'Նվազեցումներ (51-66):' : currentLanguage === 'ru' ? 'Вычеты (51-66):' : 'Deductions (51-66):'}</strong> {currentLanguage === 'hy' ? 'Մուտքագրեք նվազեցումները' : currentLanguage === 'ru' ? 'Введите вычеты' : 'Enter deductions'}</p>
+              <p>• <strong>{currentLanguage === 'hy' ? 'Հաշվարկներ (67-79):' : currentLanguage === 'ru' ? 'Расчеты (67-79):' : 'Calculations (67-79):'}</strong> {currentLanguage === 'hy' ? 'Ավտոմատ հաշվարկվում են' : currentLanguage === 'ru' ? 'Рассчитываются автоматически' : 'Calculated automatically'}</p>
             </div>
           </div>
 
@@ -383,7 +385,7 @@ const ArmenianTaxCalculator = () => {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <Input
                   type="text"
-                  placeholder="Փնտրել տողեր... (օր. եկամուտ, հարկ, շահույթ)"
+                  placeholder={tCalc.armenianTax.searchPlaceholder}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10 pr-4 py-3 bg-gray-800 border-gray-600 text-white placeholder-gray-400 focus:border-gold-500 focus:ring-gold-500/20"
@@ -629,9 +631,9 @@ const ArmenianTaxCalculator = () => {
             <table className="w-full border-collapse">
               <thead>
                 <tr className="bg-gray-800">
-                  <th className="border border-gray-600 p-3 text-center text-gold-400 font-semibold w-16">Տող</th>
-                  <th className="border border-gray-600 p-3 text-left text-gold-400 font-semibold">Անվանում</th>
-                  <th className="border border-gray-600 p-3 text-center text-gold-400 font-semibold w-48">Գումար (AMD)</th>
+                  <th className="border border-gray-600 p-3 text-center text-gold-400 font-semibold w-16">{tCalc.armenianTax.colNumber}</th>
+                  <th className="border border-gray-600 p-3 text-left text-gold-400 font-semibold">{tCalc.armenianTax.colName}</th>
+                  <th className="border border-gray-600 p-3 text-center text-gold-400 font-semibold w-48">{tCalc.armenianTax.colValue}</th>
                 </tr>
               </thead>
               <tbody>
@@ -641,12 +643,14 @@ const ArmenianTaxCalculator = () => {
                       <div className="flex flex-col items-center gap-4">
                         <Search className="w-12 h-12 text-gray-400" />
                         <div>
-                          <h3 className="text-lg font-semibold text-white mb-2">Տողեր չեն գտնվել</h3>
+                          <h3 className="text-lg font-semibold text-white mb-2">
+                            {currentLanguage === 'hy' ? 'Տողեր չեն գտնվել' : currentLanguage === 'ru' ? 'Строки не найдены' : 'No lines found'}
+                          </h3>
                           <p className="text-gray-400 mb-4">
-                            Փորձեք փոխել ձեր որոնման պարամետրերը կամ մաքրել ֆիլտրերը
+                            {currentLanguage === 'hy' ? 'Փորձեք փոխել ձեր որոնման պարամետրերը կամ մաքրել ֆիլտրերը' : currentLanguage === 'ru' ? 'Попробуйте изменить параметры поиска или очистить фильтры' : 'Try changing your search parameters or clearing filters'}
                           </p>
                           <Button onClick={clearFilters} className="bg-gold-500 hover:bg-gold-600 text-black">
-                            Մաքրել բոլոր ֆիլտրերը
+                            {currentLanguage === 'hy' ? 'Մաքրել բոլոր ֆիլտրերը' : currentLanguage === 'ru' ? 'Очистить все фильтры' : 'Clear all filters'}
                           </Button>
                         </div>
                       </div>
@@ -670,12 +674,12 @@ const ArmenianTaxCalculator = () => {
                               </span>
                               {row.isCalculated && (
                                 <Badge variant="outline" className="text-xs bg-blue-500/20 text-blue-400 border-blue-500/30">
-                                  հաշվարկվող
+                                  {currentLanguage === 'hy' ? 'հաշվարկվող' : currentLanguage === 'ru' ? 'расчетный' : 'calculated'}
                                 </Badge>
                               )}
                               {row.isSubtotal && (
                                 <Badge variant="outline" className="text-xs bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
-                                  ենթագումար
+                                  {currentLanguage === 'hy' ? 'ենթագումար' : currentLanguage === 'ru' ? 'подитог' : 'subtotal'}
                                 </Badge>
                               )}
                             </div>
@@ -720,7 +724,7 @@ const ArmenianTaxCalculator = () => {
                             <Input
                               type="number"
                               value={row.value || ''}
-                              onChange={(e) => updateRow(row.id, Number(e.target.value))}
+                              onChange={(e) => updateRow(row.id, Number(e.target.value) || 0)}
                               placeholder="0"
                               className="bg-gray-700 border-gray-600 text-white text-center"
                             />
@@ -738,28 +742,28 @@ const ArmenianTaxCalculator = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card className="bg-green-900/20 border-green-500/30">
               <CardContent className="p-4 text-center">
-                <h4 className="text-sm text-green-400 mb-2">Ընդամենը եկամուտներ</h4>
+                <h4 className="text-sm text-green-400 mb-2">{tCalc.armenianTax.totalIncomes}</h4>
                 <p className="text-2xl font-bold text-green-400">{formatAMD(calculations.totalIncomes)}</p>
               </CardContent>
             </Card>
             
             <Card className="bg-red-900/20 border-red-500/30">
               <CardContent className="p-4 text-center">
-                <h4 className="text-sm text-red-400 mb-2">Ընդամենը ծախսեր</h4>
+                <h4 className="text-sm text-red-400 mb-2">{tCalc.armenianTax.totalExpenses}</h4>
                 <p className="text-2xl font-bold text-red-400">{formatAMD(calculations.totalExpenses)}</p>
               </CardContent>
             </Card>
             
             <Card className="bg-orange-900/20 border-orange-500/30">
               <CardContent className="p-4 text-center">
-                <h4 className="text-sm text-orange-400 mb-2">Ընդամենը կորուստներ</h4>
+                <h4 className="text-sm text-orange-400 mb-2">{tCalc.armenianTax.totalLosses}</h4>
                 <p className="text-2xl font-bold text-orange-400">{formatAMD(calculations.totalLosses)}</p>
               </CardContent>
             </Card>
             
             <Card className="bg-yellow-900/20 border-yellow-500/30">
               <CardContent className="p-4 text-center">
-                <h4 className="text-sm text-yellow-400 mb-2">Ընդամենը նվազեցումներ</h4>
+                <h4 className="text-sm text-yellow-400 mb-2">{tCalc.armenianTax.totalReductions}</h4>
                 <p className="text-2xl font-bold text-yellow-400">{formatAMD(calculations.totalReductions)}</p>
               </CardContent>
             </Card>
@@ -769,7 +773,7 @@ const ArmenianTaxCalculator = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card className="bg-blue-900/20 border-blue-500/30">
               <CardContent className="p-4 text-center">
-                <h4 className="text-sm text-blue-400 mb-2">Հարկվող շահույթ (կորուստ)</h4>
+                <h4 className="text-sm text-blue-400 mb-2">{tCalc.armenianTax.taxableProfit}</h4>
                 <p className={`text-2xl font-bold ${calculations.taxableProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                   {formatAMD(calculations.taxableProfit)}
                 </p>
@@ -778,7 +782,9 @@ const ArmenianTaxCalculator = () => {
             
             <Card className="bg-purple-900/20 border-purple-500/30">
               <CardContent className="p-4 text-center">
-                <h4 className="text-sm text-purple-400 mb-2">Ճշգրտված հարկվող շահույթ</h4>
+                <h4 className="text-sm text-purple-400 mb-2">
+                  {currentLanguage === 'hy' ? 'Ճշգրտված հարկվող շահույթ' : currentLanguage === 'ru' ? 'Скорректированная налогооблагаемая прибыль' : 'Adjusted Taxable Profit'}
+                </h4>
                 <p className={`text-2xl font-bold ${calculations.adjustedTaxableProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                   {formatAMD(calculations.adjustedTaxableProfit)}
                 </p>
@@ -790,21 +796,23 @@ const ArmenianTaxCalculator = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card className="bg-indigo-900/20 border-indigo-500/30">
               <CardContent className="p-4 text-center">
-                <h4 className="text-sm text-indigo-400 mb-2">Հաշվարկված շահութահարկ (18%)</h4>
+                <h4 className="text-sm text-indigo-400 mb-2">{tCalc.armenianTax.calculatedProfitTax}</h4>
                 <p className="text-2xl font-bold text-indigo-400">{formatAMD(calculations.calculatedProfitTax)}</p>
               </CardContent>
             </Card>
             
             <Card className="bg-cyan-900/20 border-cyan-500/30">
               <CardContent className="p-4 text-center">
-                <h4 className="text-sm text-cyan-400 mb-2">Շահութահարկ ազատումներից հետո</h4>
+                <h4 className="text-sm text-cyan-400 mb-2">
+                  {currentLanguage === 'hy' ? 'Շահութահարկ ազատումներից հետո' : currentLanguage === 'ru' ? 'Налог на прибыль после освобождений' : 'Profit Tax After Exemptions'}
+                </h4>
                 <p className="text-2xl font-bold text-cyan-400">{formatAMD(calculations.finalProfitTax)}</p>
               </CardContent>
             </Card>
             
             <Card className="bg-pink-900/20 border-pink-500/30">
               <CardContent className="p-4 text-center">
-                <h4 className="text-sm text-pink-400 mb-2">Վճարման ենթակա շահութահարկ</h4>
+                <h4 className="text-sm text-pink-400 mb-2">{tCalc.armenianTax.payableProfitTax}</h4>
                 <p className={`text-2xl font-bold ${calculations.payableProfitTax >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                   {formatAMD(calculations.payableProfitTax)}
                 </p>
@@ -815,16 +823,20 @@ const ArmenianTaxCalculator = () => {
           {/* Final Result */}
           <Card className="bg-gradient-to-r from-gold-500/20 to-gold-600/20 border border-gold-500/50">
             <CardContent className="p-6 text-center">
-              <h4 className="text-2xl font-bold text-gold-400 mb-4">Վերջնական արդյունք</h4>
+              <h4 className="text-2xl font-bold text-gold-400 mb-4">
+                {currentLanguage === 'hy' ? 'Վերջնական արդյունք' : currentLanguage === 'ru' ? 'Итоговый результат' : 'Final Result'}
+              </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-gray-400 mb-2">Վճարման ենթակա շահութահարկ</p>
+                  <p className="text-sm text-gray-400 mb-2">{tCalc.armenianTax.payableProfitTax}</p>
                   <p className={`text-3xl font-bold ${calculations.payableProfitTax >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                     {formatAMD(calculations.payableProfitTax)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-400 mb-2">Հաջորդ տարիներ փոխանցվող հարկ</p>
+                  <p className="text-sm text-gray-400 mb-2">
+                    {currentLanguage === 'hy' ? 'Հաջորդ տարիներ փոխանցվող հարկ' : currentLanguage === 'ru' ? 'Налог, переносимый на след. годы' : 'Transferable Tax to Future Years'}
+                  </p>
                   <p className={`text-3xl font-bold ${calculations.transferableTax < 0 ? 'text-orange-400' : 'text-gray-400'}`}>
                     {calculations.transferableTax < 0 ? formatAMD(calculations.transferableTax) : '0 AMD'}
                   </p>
@@ -832,6 +844,7 @@ const ArmenianTaxCalculator = () => {
               </div>
             </CardContent>
           </Card>
+          <p className="text-xs text-muted-foreground text-center">{tCalc.armenianTax.note}</p>
         </CardContent>
       </Card>
     </div>
